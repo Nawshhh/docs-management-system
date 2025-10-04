@@ -81,7 +81,7 @@ async def unhandled_to_envelope(request: Request, exc: Exception):
 
 @app.exception_handler(RequestValidationError)
 async def body_validation_to_envelope(request, exc: RequestValidationError):
-    # return the first concrete error so you see what's wrong
+    # surface the first concrete error to the client
     if exc.errors():
         e = exc.errors()[0]
         loc = ".".join(str(p) for p in e.get("loc", []))
@@ -90,5 +90,3 @@ async def body_validation_to_envelope(request, exc: RequestValidationError):
     else:
         detail = "Invalid request body"
     return JSONResponse(status_code=200, content=ApiEnvelope(ok=False, error=detail).model_dump())
-
-

@@ -51,7 +51,7 @@ class UserOut(UserBase, TsMixin):
 
 class UserDB(UserBase, TsMixin):
     id: str | None = None
-    passwaord_hash: str
+    password_hash: str
     manager_scope: list[str] | None = None
 
 # Documents
