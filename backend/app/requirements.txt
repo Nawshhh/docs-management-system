@@ -1,0 +1,21 @@
+# --- Core API ---
+fastapi==0.115.0
+uvicorn==0.30.0            # plain uvicorn (no [standard]) avoids compiling uvloop/httptools on mac
+
+# --- Validation / settings ---
+pydantic==2.8.2
+pydantic-settings==2.6.0
+
+# --- MongoDB async driver ---
+motor==3.6.0               # pulls compatible pymongo; good macOS arm64 wheels
+
+# --- Auth / security ---
+bcrypt==4.2.0              
+python-dotenv==1.0.1       
+
+# --- File uploads (FastAPI form-data) ---
+python-multipart==0.0.9
+
+# --- Optional but nice to have ---
+email-validator==2.2.0     
+watchfiles==0.21.0        
