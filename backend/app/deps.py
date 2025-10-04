@@ -25,3 +25,12 @@ def require_admin(user: UserDB = Depends(get_current_user)) -> UserDB:
     if (user.role if isinstance(user.role, Role) else Role(user.role)) != Role.ADMIN:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin only")
     return user
+
+def require_user(user: UserDB = Depends(get_current_user)) -> UserDB:
+    return user
+
+def require_manager_or_admin(user: UserDB = Depends(get_current_user)) -> UserDB:
+    role = user.role if isinstance(user.role, Role) else Role(user.role)
+    if role not in (Role.MANAGER, Role.ADMIN):
+        raise HTTPException(status_code=403, detail="Manager or Admin only")
+    return user

@@ -46,13 +46,10 @@ class UserCreate(UserBase):
 
 class UserOut(UserBase, TsMixin):
     id: str = Field(..., description="Mongo _id as string")
-    # For Managers only-IDs of employees in scope
-    manager_scope: list[str] | None = None
 
 class UserDB(UserBase, TsMixin):
     id: str | None = None
     password_hash: str
-    manager_scope: list[str] | None = None
 
 # Documents
 class Attachment(BaseModel):

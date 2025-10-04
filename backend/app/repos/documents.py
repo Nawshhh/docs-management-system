@@ -85,7 +85,6 @@ async def submit_for_review(db: AsyncIOMotorDatabase, doc_id: str, owner_id: str
 
 async def list_pending_in_scope(db: AsyncIOMotorDatabase, employee_ids: Iterable[str]) -> list[DocumentOut]:
     cursor = db[COLL].find({
-        "owner_id": {"$in": [to_obj_id(e) for e in employee_ids]},
         "status": DocStatus.PENDING_REVIEW.value
     }).sort("created_at", 1)
     return [_doc_to_out(d) async for d in cursor]

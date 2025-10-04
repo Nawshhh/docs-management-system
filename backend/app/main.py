@@ -13,9 +13,11 @@ from .repos import audit_logs as logs_repo
 from .models import UserCreate, Role, DocumentCreate, Attachment, AuditAction, ResourceType
 from .config import settings
 from .users.routes import router as users_router
+from .documents.routes import router as documents_router
 
 app = FastAPI(title="Simple DMS (RBAC Demo)")
 app.include_router(users_router, prefix="/users", tags=["users"])
+app.include_router(documents_router, prefix="/documents", tags=["documents"])
 
 @app.on_event("startup")
 async def startup():

@@ -22,9 +22,6 @@ class CreateUserBody(BaseModel):
 class ChangeRoleBody(BaseModel):
     role: Role  # ADMIN | MANAGER | EMPLOYEE
 
-class ScopeBody(BaseModel):
-    employee_ids: list[str]
-
 @router.post("/admins", response_model=ApiEnvelope)
 async def create_admin(
     body: CreateUserBody,
@@ -89,29 +86,6 @@ async def change_role(
         return ok(await users_repo.get_user(db, user_id))
     except Exception:
         return fail("Could not change role")
-
-@router.post("/{manager_id}/scope", response_model=ApiEnvelope)
-async def set_manager_scope(
-    manager_id: str,
-    body: ScopeBody,
-    db: AsyncIOMotorDatabase = Depends(get_db),
-    _admin = Depends(require_admin),
-):
-    try:
-        manager = await users_repo.get_user(db, manager_id)
-        if not manager:
-            return fail("Manager not found")
-        if (manager.role if isinstance(manager.role, Role) else Role(manager.role)) != Role.MANAGER:
-            return fail("Target user is not a MANAGER")
-
-        ok_flag = await users_repo.set_manager_scope(db, manager_id, body.employee_ids)
-        if not ok_flag:
-            return fail("Failed updating scope")
-
-        await logs_repo.log_event(db, _admin.id, "ROLE_ASSIGN", "USER", manager_id, {"scope_set": body.employee_ids})
-        return ok()  # no data
-    except Exception:
-        return fail("Could not set manager scope")
 
 @router.delete("/{user_id}", response_model=ApiEnvelope)
 async def delete_user(
