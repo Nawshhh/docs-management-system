@@ -11,8 +11,6 @@ from ..repos import users as users_repo
 from ..repos import audit_logs as logs_repo
 from ..api import ok, fail, ApiEnvelope
 
-
-
 router = APIRouter()
 
 class CreateUserBody(BaseModel):
@@ -42,7 +40,7 @@ async def create_admin(
         await logs_repo.log_event(db, _admin.id, "USER_CREATE", "USER", user.id, {"role": "ADMIN"})
         return ok(user)
     except DuplicateKeyError:
-        return fail("Email already exists")
+        return fail("Email/User already exists")
     except Exception as e:
         return fail(f"Could not create admin")
 
@@ -131,3 +129,21 @@ async def delete_user(
         return ok()
     except Exception:
         return fail("Could not delete user")
+    
+@router.post("/employee", response_model=ApiEnvelope)
+async def create_employee(
+    body: CreateUserBody,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    _admin = Depends(require_admin),
+):
+    try:
+        payload = UserCreate(
+            email = body.email, password=body.password, profile={"first_name" : body.first_name, "last_name": body.last_name}
+        )
+        user = await users_repo.create_user(db, payload)
+        await logs_repo.log_event(db, _admin.id, "USER_CREATE", "USER", user.id, {"role": "EMPLOYEE"})
+        return ok(user)
+    except DuplicateKeyError:
+        return fail("Email/User already exists")
+
+    return 0
