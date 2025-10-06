@@ -42,7 +42,6 @@ def require_admin(user: UserDB = Depends(get_current_user)) -> UserDB:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin only")
     return user
 
-# (from earlier answer — keep these if you added them)
 def require_user(user: UserDB = Depends(get_current_user)) -> UserDB:
     return user
 
