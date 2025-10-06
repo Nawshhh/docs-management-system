@@ -119,5 +119,4 @@ async def create_employee(
         return ok(user)
     except DuplicateKeyError:
         return fail("Email/User already exists")
-
-    return 0
+    

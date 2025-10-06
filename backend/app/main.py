@@ -14,10 +14,12 @@ from .models import UserCreate, Role, DocumentCreate, Attachment, AuditAction, R
 from .config import settings
 from .users.routes import router as users_router
 from .documents.routes import router as documents_router
+from .auth.routes import router as auth_router
 
 app = FastAPI(title="Simple DMS (RBAC Demo)")
 app.include_router(users_router, prefix="/users", tags=["users"])
 app.include_router(documents_router, prefix="/documents", tags=["documents"])
+app.include_router(auth_router, prefix="/auth", tags=["auth"])
 
 @app.on_event("startup")
 async def startup():
@@ -38,7 +40,6 @@ async def _seed_if_empty():
     manager = await users_repo.create_user(db, UserCreate(email="manager@dms.local", password="Manager123!", role=Role.MANAGER))
     employee = await users_repo.create_user(db, UserCreate(email="employee@dms.local", password="Employee123!", role=Role.EMPLOYEE))
 
-    await users_repo.set_manager_scope(db, manager.id, [employee.id])
     await logs_repo.log_event(db, admin.id, AuditAction.USER_CREATE, ResourceType.USER, admin.id, {"seed": True})
     await logs_repo.log_event(db, admin.id, AuditAction.USER_CREATE, ResourceType.USER, manager.id, {"seed": True})
     await logs_repo.log_event(db, admin.id, AuditAction.USER_CREATE, ResourceType.USER, employee.id, {"seed": True})
