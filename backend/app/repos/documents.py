@@ -118,3 +118,8 @@ async def add_attachment(db: AsyncIOMotorDatabase, doc_id: str, owner_id: str, f
         return_document=True
     )
     return _doc_to_out(doc) if doc else None
+
+
+async def delete_document(db: AsyncIOMotorDatabase, doc_id: str, owner_id: str) -> bool:
+    res = await db[COLL].delete_one({"_id": to_obj_id(doc_id), "owner_id": to_obj_id(owner_id), "status": DocStatus.DRAFT.value})
+    return res.deleted_count == 1

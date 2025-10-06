@@ -219,3 +219,25 @@ async def reject_document(
         return ok(decided)
     except Exception:
         return fail("Could not reject document")
+    
+@router.delete("/{doc_id}/attachments", response_model=ApiEnvelope)
+async def delete_document(
+    doc_id: str,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    me = Depends(require_user)
+):
+    try:
+        docs = await docs_repo.get_document(db, doc_id)
+        if not docs:
+            return fail("Document not found")
+        elif docs.status != DocStatus.DRAFT:
+            return fail("Only the owner can delete attachments while status is DRAFT")
+        
+        is_deleted = await docs_repo.delete_document(db, doc_id, me.id)
+        if not is_deleted:
+            return fail("Only the owner can delete attachments")
+        
+        await logs_repo.log_event(db, me.id, "DOC_UPDATE", "DOCUMENT", doc_id)
+        return ok(is_deleted)
+    except Exception as e:
+        return fail("Error, can't delete attachment: ", e)
