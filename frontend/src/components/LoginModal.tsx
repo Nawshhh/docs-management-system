@@ -1,5 +1,11 @@
 
 function LoginModal() {
+
+  const formSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+  }
+
   return (
     <div className='h-auto w-auto py-8 px-8 rounded-md flex flex-col items-center justify-center'>
       <div className='grid-rows-2 gap-x-8 w-full h-full mb-8'>
