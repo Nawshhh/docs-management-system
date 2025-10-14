@@ -4,6 +4,8 @@ from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 from fastapi.exceptions import RequestValidationError
 from pymongo.errors import DuplicateKeyError
+from fastapi.middleware.cors import CORSMiddleware
+from app.config import settings 
 
 from .api import ApiEnvelope
 from .db import get_db
@@ -17,6 +19,21 @@ from .documents.routes import router as documents_router
 from .auth.routes import router as auth_router
 
 app = FastAPI(title="Simple DMS (RBAC Demo)")
+
+origins = settings.ALLOWED_ORIGINS if settings.ALLOWED_ORIGINS else [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+# CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(users_router, prefix="/users", tags=["users"])
 app.include_router(documents_router, prefix="/documents", tags=["documents"])
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
