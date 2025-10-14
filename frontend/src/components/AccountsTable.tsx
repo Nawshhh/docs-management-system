@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from 'axios';
+import ConfirmationModal from "./ConfirmationModal";
+import toast from "react-hot-toast";
 
 interface Account {
     _id: string,
@@ -10,6 +12,7 @@ interface Account {
 function AccountsTable() {
 
     const [accounts, setAccounts] = useState<Account[] | null>(null);
+    const [deleteClicked, setDeleteClicked] = useState<boolean>(false);
 
     useEffect(()=>{
         fetchAccounts()
@@ -40,19 +43,50 @@ function AccountsTable() {
     }
     }, [accounts]);
 
-    const handleDelete = async (_id: string) => {
-        try {
-            const token = localStorage.getItem("token");
-            const response = await axios.delete(`http://localhost:8000/users/${_id}`, {
-                headers: { Authorization: `Bearer ${token}` },
-                withCredentials: true,
-            });
-            console.log("Deleted response: ", response);
+    const renderSuccessToast = () => {
+        toast.success("Successfully Deleted!", {
+                style: {
+                    background: "#393939",
+                    color: "#FFFFFF"
+                }
+            }
+        );
+    }
 
-            setAccounts((prev) => prev ? prev.filter(acc => acc._id !== _id) : null);
-        } catch (error: any) {
-            console.error("Error deleting: ", error);
-        }
+    const handleDelete = async (_id: string) => {
+        toast.custom((t) => (
+            <div className="bg-slate-800 text-gray-100 p-4 rounded-md shadow-lg flex flex-col gap-3">
+            <span>Are you sure you want to delete this account?</span>
+            <div className="flex justify-end gap-2">
+                <button
+                onClick={async () => {
+                    toast.dismiss(t.id); // close toast
+                    try {
+                        const token = localStorage.getItem("token");
+                        const response = await axios.delete(`http://localhost:8000/users/${_id}`, {
+                            headers: { Authorization: `Bearer ${token}` },
+                            withCredentials: true,
+                        });
+                        console.log("Deleted response: ", response);
+                        renderSuccessToast();
+                        setAccounts((prev) => prev ? prev.filter(acc => acc._id !== _id) : null);
+                    } catch (error: any) {
+                        console.error("Error deleting: ", error);
+                    }
+                }}
+                className="bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded"
+                >
+                Yes
+                </button>
+                <button
+                onClick={() => toast.dismiss(t.id)}
+                className="bg-gray-600 hover:bg-gray-500 text-white px-3 py-1 rounded"
+                >
+                Cancel
+                </button>
+            </div>
+            </div>
+        ));
     }
 
   return (
@@ -83,6 +117,7 @@ function AccountsTable() {
                                         </td>
                                     </tr>
                                 ))}
+                                {deleteClicked && <ConfirmationModal />}
                             </tbody>
                         </table>
                     </div>

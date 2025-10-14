@@ -16,7 +16,7 @@ function LogoutButton() {
 
         localStorage.removeItem("token");
 
-        toast.success("Successfully Deleted!", {
+        toast.success("Successfully Logged Out!", {
                 style: {
                     background: "#393939",
                     color: "#FFFFFF"
