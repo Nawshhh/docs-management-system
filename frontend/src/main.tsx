@@ -7,6 +7,7 @@ import Login from './pages/Login'
 import AdminHomepage from './pages/AdminHomepage';
 import EmployeeHomepage from './pages/EmployeeHomepage';
 import ManagerHomepage from './pages/ManagerHomepage';
+import Accounts from './pages/Accounts';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -16,6 +17,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/admin-homepage" element={<AdminHomepage/>}/>
         <Route path="/employee-homepage" element={<EmployeeHomepage/>}/>
         <Route path="/manager-homepage" element={<ManagerHomepage/>}/>
+        <Route path="/accounts" element={<Accounts/>}/>
       </Routes>
     </BrowserRouter>
   </StrictMode>

@@ -11,6 +11,9 @@ from ..repos import users as users_repo
 from ..repos import audit_logs as logs_repo
 from ..api import ok, fail, ApiEnvelope
 
+from bson import ObjectId
+from datetime import datetime
+
 router = APIRouter()
 
 class CreateUserBody(BaseModel):
@@ -120,3 +123,35 @@ async def create_employee(
     except DuplicateKeyError:
         return fail("Email/User already exists")
     
+
+def serialize_user(user):
+    """Convert MongoDB types into JSON-safe values"""
+    safe_user = {}
+
+    for key, value in user.items():
+        if isinstance(value, ObjectId):
+            safe_user[key] = str(value)
+        elif isinstance(value, list):
+            safe_user[key] = [str(v) if isinstance(v, ObjectId) else v for v in value]
+        elif isinstance(value, datetime):
+            safe_user[key] = value.isoformat()
+        elif isinstance(value, dict):
+            safe_user[key] = {
+                k: (str(v) if isinstance(v, ObjectId) else v) for k, v in value.items()
+            }
+        else:
+            safe_user[key] = value
+
+    return safe_user
+
+@router.get("", tags=["users"])
+async def get_all_users(db: AsyncIOMotorDatabase = Depends(get_db)):
+    try:
+        users = await users_repo.get_all_users(db)
+        serialized_users = [serialize_user(u) for u in users]
+        return {"ok": True, "data": serialized_users, "error": None}
+    except Exception as e:
+        print(f"Error fetching users: {e}")
+        return {"ok": False, "data": None, "error": str(e)}
+    
+

@@ -20,19 +20,19 @@ from .auth.routes import router as auth_router
 
 app = FastAPI(title="Simple DMS (RBAC Demo)")
 
-origins = settings.ALLOWED_ORIGINS if settings.ALLOWED_ORIGINS else [
-    "http://localhost:5173",
+origins = [
+    "http://localhost:5173",  # Vite/React dev server
     "http://127.0.0.1:5173",
 ]
 
-# CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_credentials=True,     # needed for cookies / tokens
+    allow_methods=["*"],        # allow all HTTP methods
+    allow_headers=["*"],        # allow all headers
 )
+
 
 app.include_router(users_router, prefix="/users", tags=["users"])
 app.include_router(documents_router, prefix="/documents", tags=["documents"])
@@ -75,38 +75,3 @@ async def _seed_if_empty():
 @app.get("/health")
 async def health():
     return {"ok": True}
-
-# @app.exception_handler(HTTPException)
-# async def http_exception_to_envelope(request: Request, exc: HTTPException):
-#     # Convert HTTP errors to 200 with {ok:false}
-#     return JSONResponse(status_code=200, content=ApiEnvelope(ok=False, error=str(exc.detail)).model_dump())
-
-# @app.exception_handler(RequestValidationError)
-# async def body_validation_to_envelope(request: Request, exc: RequestValidationError):
-#     return JSONResponse(status_code=200, content=ApiEnvelope(ok=False, error="Invalid request body").model_dump())
-
-# @app.exception_handler(ValidationError)
-# async def pydantic_validation_to_envelope(request: Request, exc: ValidationError):
-#     return JSONResponse(status_code=200, content=ApiEnvelope(ok=False, error="Validation error").model_dump())
-
-# @app.exception_handler(DuplicateKeyError)
-# async def duplicate_key_to_envelope(request: Request, exc: DuplicateKeyError):
-#     return JSONResponse(status_code=200, content=ApiEnvelope(ok=False, error="Email already exists").model_dump())
-
-# @app.exception_handler(Exception)
-# async def unhandled_to_envelope(request: Request, exc: Exception):
-#     # Last resort: log server-side, respond safely client-side
-#     # (You can add real logging here.)
-#     return JSONResponse(status_code=200, content=ApiEnvelope(ok=False, error="Unexpected server error").model_dump())
-
-# @app.exception_handler(RequestValidationError)
-# async def body_validation_to_envelope(request, exc: RequestValidationError):
-#     # surface the first concrete error to the client
-#     if exc.errors():
-#         e = exc.errors()[0]
-#         loc = ".".join(str(p) for p in e.get("loc", []))
-#         msg = e.get("msg", "Invalid request body")
-#         detail = f"{loc}: {msg}" if loc else msg
-#     else:
-#         detail = "Invalid request body"
-#     return JSONResponse(status_code=200, content=ApiEnvelope(ok=False, error=detail).model_dump())

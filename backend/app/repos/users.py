@@ -61,3 +61,12 @@ async def get_user(db: AsyncIOMotorDatabase, user_id: str) -> Optional[UserOut]:
 async def delete_user(db: AsyncIOMotorDatabase, user_id: str) -> bool:
     res = await db[COLL].delete_one({"_id": to_obj_id(user_id)})
     return res.deleted_count == 1
+
+async def get_all_users(db):
+    try:
+        cursor = db.users.find({})
+        users = await cursor.to_list(length=None)
+        return users
+    except Exception as e:
+        print(f"[get_all_users] DB error: {e}")
+        return []
