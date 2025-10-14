@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, Header
-from fastapi import status
+from fastapi import APIRouter, Depends, Header, Request
+from fastapi.encoders import jsonable_encoder
 from motor.motor_asyncio import AsyncIOMotorDatabase
+from fastapi.responses import JSONResponse
 import bcrypt
 import jwt
 
@@ -26,29 +27,54 @@ class LoginBody(BaseModel):
 async def login(body: LoginBody, db: AsyncIOMotorDatabase = Depends(get_db)):
     try:
         user = await users_repo.find_by_email(db, body.email)
-        if not user:
-            return fail("Invalid credentials")
-        if not bcrypt.checkpw(body.password.encode(), user.password_hash.encode()):
+        if not user or not bcrypt.checkpw(body.password.encode(), user.password_hash.encode()):
             return fail("Invalid credentials")
 
         access = make_token(
-            user.id, secret=settings.JWT_SECRET, ttl_minutes=ACCESS_TTL_MIN,
-            extra={"role": (user.role.value if isinstance(user.role, Role) else user.role), "email": user.email}
+            user.id,
+            secret=settings.JWT_SECRET,
+            ttl_minutes=ACCESS_TTL_MIN,
+            extra={"role": user.role.value, "email": user.email},
         )
-        refresh = make_token(user.id, secret=settings.JWT_REFRESH_SECRET, ttl_minutes=REFRESH_TTL_MIN)
-        # return a light user payload to the client
+        refresh = make_token(
+            user.id,
+            secret=settings.JWT_REFRESH_SECRET,
+            ttl_minutes=REFRESH_TTL_MIN,
+        )
         uout = await users_repo.get_user(db, user.id)
-        return ok({"access": access, "refresh": refresh, "user": uout})
-    except Exception:
+        # convert if needed
+        if hasattr(uout, "dict"): 
+            uout = uout.dict()
+        if "_id" in uout:
+            uout["_id"] = str(uout["_id"])
+
+        envelope = ok({"access": access, "user": uout})
+        response = JSONResponse(content=jsonable_encoder(envelope))
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh,
+            httponly=True,
+            secure=False,      # True in prod
+            samesite="lax",
+            max_age=60 * 60 * 24 * 7,
+        )
+        return response
+    except Exception as e:
+        print("Login error:", e)
+        import traceback; traceback.print_exc()
         return fail("Could not login")
 
 class RefreshBody(BaseModel):
     refresh: str
 
 @router.post("/refresh", response_model=ApiEnvelope)
-async def refresh_token(body: RefreshBody, db: AsyncIOMotorDatabase = Depends(get_db)):
+async def refresh_token(request: Request, db: AsyncIOMotorDatabase = Depends(get_db)):
     try:
-        decoded = verify_token(body.refresh, secret=settings.JWT_REFRESH_SECRET)
+        refresh = request.cookies.get("refresh_token")
+        if not refresh:
+            return fail("No refresh token")
+
+        decoded = verify_token(refresh, secret=settings.JWT_REFRESH_SECRET)
         uid = decoded.get("sub")
         if not uid:
             return fail("Invalid refresh token")
@@ -58,8 +84,10 @@ async def refresh_token(body: RefreshBody, db: AsyncIOMotorDatabase = Depends(ge
             return fail("User no longer exists")
 
         access = make_token(
-            uid, secret=settings.JWT_SECRET, ttl_minutes=ACCESS_TTL_MIN,
-            extra={"role": (u.role.value if isinstance(u.role, Role) else u.role), "email": u.email}
+            uid,
+            secret=settings.JWT_SECRET,
+            ttl_minutes=ACCESS_TTL_MIN,
+            extra={"role": u.role.value, "email": u.email},
         )
         return ok({"access": access})
     except jwt.ExpiredSignatureError:
@@ -88,7 +116,20 @@ async def me(db: AsyncIOMotorDatabase = Depends(get_db), authorization: str | No
     except Exception:
         return fail("Could not fetch profile")
 
-@router.post("/logout", response_model=ApiEnvelope)
+@router.post("/logout")
 async def logout():
-    # Stateless JWT: client should discard tokens. (Add blacklist if you need server-side revocation.)
-    return ok()
+    try:
+        response = JSONResponse(content={"ok": True, "message": "Logged out successfully"})
+        # delete refresh token cookie if it exists
+        response.delete_cookie(
+            key="refresh_token",
+            samesite="lax",
+            secure=False,  # True in production
+        )
+        return response
+    except Exception as e:
+        print("Logout error:", e)
+        return JSONResponse(
+            content={"ok": False, "error": "Logout failed"},
+            status_code=500
+        )

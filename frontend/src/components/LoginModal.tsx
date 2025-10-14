@@ -1,7 +1,10 @@
 import {useState} from 'react';
 import axios from 'axios';
+import { useNavigate } from "react-router-dom";
 
 function LoginModal() {
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -12,17 +15,23 @@ function LoginModal() {
     setError(null);
 
     try {
-      const response = await axios.post("http://127.0.0.1:8000/auth/login", {
-        email,
-        password,
-      });
+      const response = await axios.post("http://localhost:8000/auth/login",
+        { email, password },
+        { withCredentials: true }
+      );
 
-       console.log('Login successful:', response.data);
-
-       localStorage.setItem("token", response.data.data.access);
+      const token = response.data?.data?.access;
+      console.log("Login successful, token:", token);
+      if (token) {
+        localStorage.setItem("token", token);
+        navigate("/homepage");
+      } else {
+        console.error("No access token returned:", response.data);
+        setError(response.data?.error);
+      }
 
     } catch (error: any) {
-      console.error('Login failed:', error.response?.data || error.message);
+      console.error("Login failed:", error.response?.data || error.message);
     } finally {
       setLoading(false);
       setEmail("");
@@ -41,8 +50,7 @@ function LoginModal() {
             className='rounded-md p-1 px-2 border-1 border-neutral-500 text-gray-200 font-light'
             name="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder='Enter your username'/>
+            onChange={(e) => setEmail(e.target.value)}/>
         </div>
         <div className='flex flex-col gap-y-2'>
           <span className=' text-gray-200'>Password</span>
@@ -51,8 +59,7 @@ function LoginModal() {
             className='rounded-md p-1 px-2 border-1 border-neutral-500 text-gray-200'
             name="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder='Enter your password'/>
+            onChange={(e) => setPassword(e.target.value)}/>
         </div>
       </div>
       {error && (

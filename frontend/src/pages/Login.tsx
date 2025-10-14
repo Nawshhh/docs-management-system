@@ -1,6 +1,6 @@
-import LoginModal from './components/LoginModal'
+import LoginModal from '../components/LoginModal';
 
-function App() {
+function Login() {
   return (
     <div className='w-screen h-screen flex items-center justify-center bg-zinc-900'>
       <LoginModal></LoginModal>
@@ -8,4 +8,4 @@ function App() {
   )
 }
 
-export default App
+export default Login
