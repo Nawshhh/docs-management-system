@@ -55,7 +55,7 @@ function AdminHomepage() {
             {user ? `Hello Admin, ${firstName}` : 'Loading...'}
         </div>
 
-        <div className='grid grid-cols-2 gap-10 w-full my-10 text-gray-200 text-xl font-semibold'>
+        <div className='grid grid-cols-2 gap-6 w-full my-10 text-gray-200 text-xl font-semibold'>
             <button 
                 onClick={() => handleButtonClick(1)}
                 className='flex items-center justify-center bg-slate-700 hover:bg-slate-600 rounded-md h-20 cursor-pointer'>
@@ -77,8 +77,6 @@ function AdminHomepage() {
                 Documents
             </button>
         </div>
-
-
         <LogoutButton/>
     </div>
   )

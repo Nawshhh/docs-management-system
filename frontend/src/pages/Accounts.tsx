@@ -4,8 +4,14 @@ import { useNavigate } from 'react-router-dom'
 function Accounts() {
     
   const navigate = useNavigate();
+
   const handleHome = () => {
     navigate("/admin-homepage");
+  }
+
+  const handleCreateAccount = () => {
+    console.log("Routing to create account");
+    navigate("/create-account");
   }
 
   return (
@@ -15,9 +21,10 @@ function Accounts() {
         <div className='flex justify-center items-center w-full gap-x-20'>
             <button 
                 onClick={handleHome}
-                className='mt-5 h-8 px-10 bg-sky-700 hover:bg-sky-600 rounded-md text-gray-200 hover:text-gray-300 text-sm cursor-pointer'
+                className='mt-5 h-8 px-10 bg-neutral-700 hover:bg-neutral-600 rounded-md text-gray-200 hover:text-gray-300 text-sm cursor-pointer'
             >Back to Home</button>
             <button 
+                onClick={handleCreateAccount}
                 className='mt-5 h-8 px-10 bg-sky-700 hover:bg-sky-600 rounded-md text-gray-200 hover:text-gray-300 text-sm cursor-pointer'
             >Create Account</button>
         </div>
