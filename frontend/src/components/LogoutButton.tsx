@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { useNavigate } from "react-router-dom";
+import toast from 'react-hot-toast';
 
 function LogoutButton() {
     const navigate = useNavigate();
@@ -14,6 +15,14 @@ function LogoutButton() {
         console.log('Logout successful:', response.data);
 
         localStorage.removeItem("token");
+
+        toast.success("Successfully Deleted!", {
+                style: {
+                    background: "#393939",
+                    color: "#FFFFFF"
+                }
+            }
+        );
 
         navigate("/");
 

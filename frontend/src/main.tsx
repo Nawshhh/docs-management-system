@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { Toaster } from 'react-hot-toast';
 import './index.css'
 
 import Login from './pages/Login'
@@ -19,6 +20,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/manager-homepage" element={<ManagerHomepage/>}/>
         <Route path="/accounts" element={<Accounts/>}/>
       </Routes>
+      <Toaster position="bottom-right" reverseOrder={true}/>
     </BrowserRouter>
   </StrictMode>
 );

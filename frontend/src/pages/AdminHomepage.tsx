@@ -2,6 +2,7 @@ import {useState, useEffect} from 'react';
 import axios from 'axios';
 import LogoutButton from '../components/LogoutButton';
 import { useNavigate } from "react-router-dom";
+import toast from 'react-hot-toast';
 
 function AdminHomepage() {
     const navigate = useNavigate();
@@ -17,7 +18,14 @@ function AdminHomepage() {
         const token = localStorage.getItem("token");
         if (!token) {
             console.log("No token found — user probably logged out");
-            return;
+            toast.error("No Permission!", {
+                    style: {
+                        background: "#393939",
+                        color: "#FFFFFF"
+                    }
+                }
+            );
+            navigate("/");
         }
 
         try {
