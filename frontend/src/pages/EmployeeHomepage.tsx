@@ -1,12 +1,11 @@
-import {useState, useEffect} from 'react';
+import {useEffect, useState} from 'react'
 import axios from 'axios';
+
 import LogoutButton from '../components/LogoutButton';
 
-
-function Homepage() {
-
-    const [user, setUser] = useState<any>(null);
-    const [firstName, setFirstName] = useState<string | null>(null);
+function EmployeeHomepage() {
+   const [user, setUser] = useState<any>(null);
+   const [firstName, setFirstName] = useState<string | null>(null);
 
     // Fetch user info on component mount
     useEffect(() => {
@@ -33,8 +32,6 @@ function Homepage() {
         }
     };
 
-
-
   return (
     <div className='w-screen h-screen flex items-center justify-center bg-zinc-900'>
         <div className='text-gray-200 text-3xl font-bold'>
@@ -45,4 +42,4 @@ function Homepage() {
   )
 }
 
-export default Homepage
+export default EmployeeHomepage

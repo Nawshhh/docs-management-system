@@ -2,6 +2,8 @@ import {useState} from 'react';
 import axios from 'axios';
 import { useNavigate } from "react-router-dom";
 
+
+
 function LoginModal() {
   const navigate = useNavigate();
 
@@ -24,7 +26,10 @@ function LoginModal() {
       console.log("Login successful, token:", token);
       if (token) {
         localStorage.setItem("token", token);
-        navigate("/homepage");
+        if (response.data.data.user.role === 'ADMIN'){
+          navigate("/admin-homepage");
+        } else return
+        
       } else {
         console.error("No access token returned:", response.data);
         setError(response.data?.error);
@@ -55,7 +60,7 @@ function LoginModal() {
         <div className='flex flex-col gap-y-2'>
           <span className=' text-gray-200'>Password</span>
           <input 
-            type="text" 
+            type="password" 
             className='rounded-md p-1 px-2 border-1 border-neutral-500 text-gray-200'
             name="password"
             value={password}

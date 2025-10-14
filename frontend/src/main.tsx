@@ -4,14 +4,18 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import './index.css'
 
 import Login from './pages/Login'
-import Homepage from './pages/Homepage';
+import AdminHomepage from './pages/AdminHomepage';
+import EmployeeHomepage from './pages/EmployeeHomepage';
+import ManagerHomepage from './pages/ManagerHomepage';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Login/>}/>
-        <Route path="/homepage" element={<Homepage/>}/>
+        <Route path="/admin-homepage" element={<AdminHomepage/>}/>
+        <Route path="/employee-homepage" element={<EmployeeHomepage/>}/>
+        <Route path="/manager-homepage" element={<ManagerHomepage/>}/>
       </Routes>
     </BrowserRouter>
   </StrictMode>
