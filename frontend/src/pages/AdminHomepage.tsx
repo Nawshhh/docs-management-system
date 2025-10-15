@@ -33,7 +33,7 @@ function AdminHomepage() {
             headers: { Authorization: `Bearer ${token}` },
             withCredentials: true,
             });
-            console.log("User info fetched:", res.data.data);
+            console.log("User info fetched:", res.data.data.id);
             setUser(res.data.data);
             setFirstName(res.data.data.profile.first_name);
         } catch (error: any) {
@@ -43,7 +43,7 @@ function AdminHomepage() {
 
     const handleButtonClick = (dest: number) => {
         if (dest === 1) navigate("/accounts");
-        if (dest === 2) navigate("/roles");
+        if (dest === 2) navigate("/roles", { state: {my_id: user.id} });
         if (dest === 3) navigate("/system-logs");
         if (dest === 4) navigate("/documents");
     }

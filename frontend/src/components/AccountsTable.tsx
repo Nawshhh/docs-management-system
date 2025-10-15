@@ -12,7 +12,6 @@ interface Account {
 function AccountsTable() {
 
     const [accounts, setAccounts] = useState<Account[] | null>(null);
-    const [deleteClicked, setDeleteClicked] = useState<boolean>(false);
 
     useEffect(()=>{
         fetchAccounts()
@@ -117,7 +116,6 @@ function AccountsTable() {
                                         </td>
                                     </tr>
                                 ))}
-                                {deleteClicked && <ConfirmationModal />}
                             </tbody>
                         </table>
                     </div>
