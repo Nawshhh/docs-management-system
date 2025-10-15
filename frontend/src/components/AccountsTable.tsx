@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import axios from 'axios';
-import ConfirmationModal from "./ConfirmationModal";
 import toast from "react-hot-toast";
 
 interface Account {

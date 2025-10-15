@@ -11,6 +11,7 @@ import ManagerHomepage from './pages/ManagerHomepage';
 import Accounts from './pages/Accounts';
 import CreateAccount from './pages/CreateAccount';
 import Roles from './pages/Roles';
+import Logs from './pages/Logs';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -23,6 +24,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/accounts" element={<Accounts/>}/>
         <Route path="/create-account" element={<CreateAccount/>}/>
         <Route path="/roles" element={<Roles/>}/>
+        <Route path="/system-logs" element={<Logs/>}/>
       </Routes>
       <Toaster position="bottom-right" reverseOrder={true}/>
     </BrowserRouter>

@@ -122,7 +122,7 @@ function RolesTable() {
 
                         <tbody className="divide-y divide-gray-200">
                             {accounts?.map((acc) => (
-                            <tr key={acc._id}>
+                           <tr key={acc._id}>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-200">{acc.email}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-200">{acc.role}</td>
 
@@ -130,7 +130,7 @@ function RolesTable() {
                                 {/* Button */}
                                 <button
                                     onClick={() =>
-                                    setOpenDropdownId(openDropdownId === acc._id ? null : acc._id)
+                                        setOpenDropdownId(openDropdownId === acc._id ? null : acc._id)
                                     }
                                     className={`text-white bg-sky-700 hover:bg-sky-800 focus:ring-4 focus:outline-none focus:ring-blue-300 
                                             font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center`}
@@ -156,7 +156,7 @@ function RolesTable() {
 
                                 {/* Dropdown menu */}
                                 {openDropdownId === acc._id && !unClickable && (
-                                    <div className="relative right-0 mt-2 z-10 bg-gray-800 divide-y divide-gray-700 rounded-lg shadow-sm w-44">
+                                    <div className="right-0 mt-2 z-10 bg-gray-800 divide-y divide-gray-700 rounded-lg shadow-sm w-44">
                                     <ul className="py-2 text-sm text-gray-200">
                                         <li>
                                         <button 

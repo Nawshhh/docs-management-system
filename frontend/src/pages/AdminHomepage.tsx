@@ -7,7 +7,8 @@ import toast from 'react-hot-toast';
 function AdminHomepage() {
     const navigate = useNavigate();
     const [user, setUser] = useState<any>(null);
-    const [firstName, setFirstName] = useState<string | null>(null);
+    const [firstName, setFirstName] = useState<string | null>("User");
+    const [lastName, setLastName] = useState<string | null>(null);
 
     // Fetch user info on component mount
     useEffect(() => {
@@ -36,6 +37,7 @@ function AdminHomepage() {
             console.log("User info fetched:", res.data.data.id);
             setUser(res.data.data);
             setFirstName(res.data.data.profile.first_name);
+            setLastName(res.data.data.profile.last_name)
         } catch (error: any) {
             console.error("User info failed:", error.response?.data || error.message);
         }
@@ -48,11 +50,10 @@ function AdminHomepage() {
         if (dest === 4) navigate("/documents");
     }
 
-
   return (
     <div className='w-screen h-screen flex flex-col items-center justify-center bg-zinc-900 px-20 md:px-80 sm:px-10'>
         <div className='text-gray-200 text-3xl font-bold'>
-            {user ? `Hello Admin, ${firstName}` : 'Loading...'}
+            {user ? `Hello Admin, ${firstName} ${lastName}` : 'Loading...'}
         </div>
 
         <div className='grid grid-cols-2 gap-6 w-full my-10 text-gray-200 text-xl font-semibold'>
