@@ -12,6 +12,7 @@ import Accounts from './pages/Accounts';
 import CreateAccount from './pages/CreateAccount';
 import Roles from './pages/Roles';
 import Logs from './pages/Logs';
+import Documents from './pages/Documents';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -25,6 +26,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/create-account" element={<CreateAccount/>}/>
         <Route path="/roles" element={<Roles/>}/>
         <Route path="/system-logs" element={<Logs/>}/>
+        <Route path="/documents" element={<Documents/>}/>
       </Routes>
       <Toaster position="bottom-right" reverseOrder={true}/>
     </BrowserRouter>
