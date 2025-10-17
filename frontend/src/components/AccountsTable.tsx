@@ -51,8 +51,20 @@ function AccountsTable() {
         );
     }
 
-    const deleteAccount = async (_id: string) => {
-        
+    const deleteAccount = async (_id: string, t: any) => {
+        toast.dismiss(t.id); // close toast
+        try {
+            const token = localStorage.getItem("token");
+            const response = await axios.delete(`http://localhost:8000/users/${_id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+                withCredentials: true,
+            });
+            console.log("Deleted response: ", response);
+            renderSuccessToast();
+            setAccounts((prev) => prev ? prev.filter(acc => acc._id !== _id) : null);
+        } catch (error: any) {
+            console.error("Error deleting: ", error);
+        }
     }
 
     const handleDelete = async (_id: string) => {
@@ -61,21 +73,7 @@ function AccountsTable() {
             <span>Are you sure you want to delete this account?</span>
             <div className="flex justify-end gap-2">
                 <button
-                onClick={async () => {
-                    toast.dismiss(t.id); // close toast
-                    try {
-                        const token = localStorage.getItem("token");
-                        const response = await axios.delete(`http://localhost:8000/users/${_id}`, {
-                            headers: { Authorization: `Bearer ${token}` },
-                            withCredentials: true,
-                        });
-                        console.log("Deleted response: ", response);
-                        renderSuccessToast();
-                        setAccounts((prev) => prev ? prev.filter(acc => acc._id !== _id) : null);
-                    } catch (error: any) {
-                        console.error("Error deleting: ", error);
-                    }
-                }}
+                onClick={() => deleteAccount(_id,t)}
                 className="bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded"
                 >
                 Yes
