@@ -51,6 +51,10 @@ function AccountsTable() {
         );
     }
 
+    const deleteAccount = async (_id: string) => {
+        
+    }
+
     const handleDelete = async (_id: string) => {
         toast.custom((t) => (
             <div className="bg-slate-800 text-gray-100 p-4 rounded-md shadow-lg flex flex-col gap-3">
