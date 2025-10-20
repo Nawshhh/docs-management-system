@@ -14,6 +14,10 @@ function Documents() {
     navigate("");
   }
 
+  const handleViewDocuments = () => {
+    navigate("");
+  }
+
   return (
     <div className='w-screen h-screen flex flex-col items-center justify-center bg-zinc-900 px-20 md:px-80 sm:px-10'>
         <p className='font-semibold text-3xl text-gray-200 mb-10'>Documents Page</p>
