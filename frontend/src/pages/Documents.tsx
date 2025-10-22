@@ -9,16 +9,11 @@ function Documents() {
     navigate("/admin-homepage");
   }
 
-
   const handleApproveDocuments = () => {
     navigate("");
   }
 
   const handleViewDocuments = () => {
-    navigate("");
-  }
-
-  const handleUploadDocuments = () => {
     navigate("");
   }
 
@@ -33,10 +28,6 @@ function Documents() {
             <button  
                 className='flex items-center justify-center bg-slate-700 hover:bg-slate-600 rounded-md h-20 cursor-pointer'>
                 Approve Documents
-            </button>
-            <button 
-                className='flex items-center justify-center bg-slate-700 hover:bg-slate-600 rounded-md h-20 cursor-pointer'>
-                Upload Documents
             </button>
         </div>
         <button 
