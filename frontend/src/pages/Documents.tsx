@@ -8,10 +8,12 @@ function Documents() {
     navigate("/admin-homepage");
   }
 
+  // soon to implement
   const handleApproveDocuments = () => {
     navigate("");
   }
 
+  // soon to implement
   const handleViewDocuments = () => {
     navigate("");
   }
