@@ -8,7 +8,6 @@ import toast from 'react-hot-toast';
 function CreateAccount() {
 
     const navigate = useNavigate();
-    const [user, setUser] = useState<any>(null);
 
     const [formData, setFormData] = useState({
         first_name: "",
@@ -43,7 +42,6 @@ function CreateAccount() {
             withCredentials: true,
             });
             console.log("User info fetched:", res.data.data);
-            setUser(res.data.data);
         } catch (error: any) {
             console.error("User info failed:", error.response?.data || error.message);
         }
