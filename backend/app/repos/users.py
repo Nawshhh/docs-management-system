@@ -42,18 +42,36 @@ async def create_user(db: AsyncIOMotorDatabase, payload: UserCreate, role_overri
     doc["_id"] = res.inserted_id
     return _doc_to_out(doc)
 
-async def find_by_email(db: AsyncIOMotorDatabase, email: str) -> Optional[UserDB]:
+async def get_user_by_email(db: AsyncIOMotorDatabase, email: str) -> Optional[UserDB]:
     doc = await db[COLL].find_one({"email": email.lower().strip()})
     if not doc: return None
+    return str(doc["_id"])
+
+async def find_by_email(db: AsyncIOMotorDatabase, email: str) -> Optional[UserDB]:
+    doc = await db[COLL].find_one({"email": email.lower().strip()})
+    if not doc:
+        return None
     return UserDB(
         id=str(doc["_id"]),
         email=doc["email"],
         password_hash=doc["password_hash"],
-        role=doc["role"],
+        role=doc["role"],            # if this is already a string, later don't use .value
         profile=doc.get("profile"),
         created_at=doc.get("created_at"),
         updated_at=doc.get("updated_at"),
     )
+
+async def find_by_security_answer(db: AsyncIOMotorDatabase, email: str, security_answer: str) -> Optional[UserDB]:
+    doc = await db[COLL].find_one({"email": email.lower().strip(), "security_answer": security_answer})
+    if not doc: return False
+    return True
+
+async def update_password(db: AsyncIOMotorDatabase, user_id: str, new_password: str) -> bool:
+    res = await db[COLL].update_one(
+        {"_id": to_obj_id(user_id)},
+        {"$set": {"password_hash": hash_password(new_password), "updated_at": datetime.utcnow()}}
+    )
+    return res.modified_count == 1
 
 async def get_user(db: AsyncIOMotorDatabase, user_id: str) -> Optional[UserOut]:
     doc = await db[COLL].find_one({"_id": to_obj_id(user_id)})

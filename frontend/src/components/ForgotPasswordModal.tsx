@@ -1,0 +1,223 @@
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+
+import { useState } from 'react';
+import toast from 'react-hot-toast';
+
+function ForgotPasswordModal() {
+
+    const [nickName, setNickName] = useState<string>("");
+    const [email, setEmail] = useState<string>("");
+    const [foundEmail, setFoundEmail] = useState<boolean>(false);
+    const [matchedNickname, setMatchedNickname] = useState<boolean>(false);
+    const [newPassword, setNewPassword] = useState<string>("");
+
+    const navigate = useNavigate();
+
+    const newPasswordChecks = {
+    length: newPassword.length >= 7,
+    number: /\d/.test(newPassword),
+    special: /[^A-Za-z0-9]/.test(newPassword),
+    };
+
+    const isNewPasswordValid = Object.values(newPasswordChecks).every(Boolean);
+
+    const [failedAttempts, setFailedAttempts] = useState(0);
+    const [isLocked, setIsLocked] = useState(false);
+    const [lockMessage, setLockMessage] = useState<string | null>(null);
+
+    const registerFailure = () => {
+    setFailedAttempts(prev => {
+        const next = prev + 1;
+
+        if (next >= 3) {
+        setIsLocked(true);
+        setLockMessage("Too many attempts. Please try again after 1 minute.");
+
+        // unlock after 60 seconds
+        setTimeout(() => {
+            setIsLocked(false);
+            setFailedAttempts(0);
+            setLockMessage(null);
+        }, 60_000);
+        }
+
+        return next;
+    });
+    };
+
+
+    const handleFindEmail = async () => {
+        try {
+            const res = await axios.post("http://localhost:8000/users/find-by-email",
+                { email }
+            );
+            console.log("Find email message:", res.data);
+            if (!res.data.ok){
+                setFoundEmail(false);
+            }
+            else {
+                setFoundEmail(true);
+            }
+        } catch (error: any) {
+            console.log("Error finding email:", error.response?.data || error.message);
+        } 
+    }
+
+    const handleVerifyNickname = async () => {
+        if (isLocked) return;
+
+        try {
+            const res = await axios.post("http://localhost:8000/users/find-nickname",
+                { email, security_answer: nickName }
+            );
+
+            console.log("Find nickname message:", res.data, email, nickName);
+
+            if (!res.data.ok) {
+                registerFailure();
+                setMatchedNickname(false);
+                return;
+            }
+
+            setMatchedNickname(true);
+
+        } catch (error: any) {
+            console.log("Error matching nickname:", error.response?.data || error.message);
+            registerFailure();
+        } 
+    }
+
+    const handleChangePassword = async () => {
+        try {
+            const userRes = await axios.post(
+            "http://localhost:8000/users/get-user-by-email",
+            { email }
+            );
+
+            const userId = userRes.data.data; // since backend returns just the id string
+
+            const res = await axios.post(
+            "http://localhost:8000/users/reset-password",
+            { user_id: userId, new_password: newPassword }
+            );
+
+            console.log("Change password message:", res.data);
+            if (res.data.ok){
+                handleBackToLogin();
+                toast.success("Password updated successfully!");
+            }
+        } catch (error: any) {
+            console.log("Error changing password:", error.response?.data || error.message);
+        }
+    };
+
+    const handleBackToLogin = () => {
+        navigate("/");
+    }
+
+  return (
+    <div className='h-auto w-auto py-8 px-8 rounded-md flex flex-col items-center justify-center'>
+      <div className='grid-rows-2 gap-x-8 w-full h-full mb-8'>
+        <div className="w-full flex flex-col text-center mb-4 text-gray-200 text-3xl font-bold">Forgot Password</div>
+            {/*Container of modal*/}
+            {!foundEmail ? ( 
+            <div className='flex flex-col gap-y-2 mb-4 w-xs'>
+                <span className=' text-gray-200'>Email</span>
+                <input
+                    type="text" 
+                    className='rounded-md p-1 px-2 border-1 border-neutral-500 text-gray-200 font-light'
+                    name="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}/>
+                    
+                <div className="flex flex-row gap-x-2 w-full">
+                    <button
+                        onClick={handleBackToLogin}
+                        className="h-10 flex-1 bg-neutral-700 hover:bg-neutral-600 rounded-md 
+                                text-gray-200 hover:text-gray-300 text-sm cursor-pointer"
+                    >
+                        Back to Log In
+                    </button>
+
+                    <button
+                        onClick={handleFindEmail}
+                        className="h-10 flex-1 bg-sky-700 hover:bg-sky-600 rounded-md 
+                                text-gray-200 hover:text-gray-300 text-sm cursor-pointer"
+                    >
+                        Find Email
+                    </button>
+                </div>
+            </div>) : !matchedNickname ? (
+            <div className='flex flex-col gap-y-2 mb-4 w-xs'>
+                <span className=' text-gray-200'>Security Question: What is your nickname?</span>
+                <input
+                    type="text" 
+                    className='rounded-md p-1 px-2 border-1 border-neutral-500 text-gray-200 font-light'
+                    name="nickname"
+                    value={nickName}
+                    onChange={(e) => setNickName(e.target.value)}/>
+                <div className="flex flex-row gap-x-2 w-full">
+                    <button
+                        onClick={handleBackToLogin}
+                        className="h-10 flex-1 bg-neutral-700 hover:bg-neutral-600 rounded-md 
+                                text-gray-200 hover:text-gray-300 text-sm cursor-pointer"
+                    >
+                        Back to Log In
+                    </button>
+
+                    <button
+                        disabled={isLocked}
+                        onClick={handleVerifyNickname}
+                        className="h-10 flex-1 bg-sky-700 hover:bg-sky-600 rounded-md 
+                                text-gray-200 hover:text-gray-300 text-sm cursor-pointer"
+                    >
+                        Verify
+                    </button>
+                </div>
+                {lockMessage && (
+                    <p className="text-red-400 text-xs mt-1">{lockMessage}</p>
+                )}
+            </div>
+            ) : (
+                <div className='flex flex-col gap-y-2 mb-4 w-xs'>
+                    <span className='text-gray-200'>Enter new password</span>
+                    <input
+                    type="password"
+                    className='rounded-md p-1 px-2 border-1 border-neutral-500 text-gray-200 font-light'
+                    name="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    />
+
+                    {/* Live password rules */}
+                    <div className="mt-2 text-xs space-y-1">
+                    <div className={newPasswordChecks.length ? "text-green-400" : "text-gray-400"}>
+                        {newPasswordChecks.length ? "✓" : "•"} At least 7 characters
+                    </div>
+                    <div className={newPasswordChecks.number ? "text-green-400" : "text-gray-400"}>
+                        {newPasswordChecks.number ? "✓" : "•"} At least one number
+                    </div>
+                    <div className={newPasswordChecks.special ? "text-green-400" : "text-gray-400"}>
+                        {newPasswordChecks.special ? "✓" : "•"} At least one special character
+                    </div>
+                    </div>
+
+                    <button 
+                    onClick={handleChangePassword}  // if you have a handler
+                    disabled={!isNewPasswordValid}
+                    className={`h-8 px-10 rounded-md text-gray-200 text-sm cursor-pointer
+                        ${!isNewPasswordValid
+                        ? "bg-sky-900 text-gray-400 cursor-not-allowed"
+                        : "bg-sky-700 hover:bg-sky-600 hover:text-gray-300"
+                        }`}
+                    >
+                    Change</button>
+                </div>
+            )}
+        </div>
+    </div>
+  )
+}
+
+export default ForgotPasswordModal

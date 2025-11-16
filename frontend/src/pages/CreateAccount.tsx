@@ -1,6 +1,6 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
@@ -18,6 +18,16 @@ function CreateAccount() {
         secuirty_answer: ""
     });
 
+    const password = formData.password || "";
+
+    const passwordChecks = {
+    length: password.length >= 7,
+    number: /\d/.test(password),
+    special: /[^A-Za-z0-9]/.test(password),
+    };
+
+    const isPasswordValid = Object.values(passwordChecks).every(Boolean);
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFormData({
         ...formData,
@@ -27,6 +37,10 @@ function CreateAccount() {
 
     const handleCreateAccount = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!isPasswordValid) {
+            return;
+        }
 
         try {
             const res = await axios.post( "http://localhost:8000/users/employee",
@@ -113,13 +127,26 @@ function CreateAccount() {
             <div className="flex flex-col">
                 <label className="text-gray-300 text-sm mb-1">Password</label>
                 <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="Enter password"
-                className="rounded-md bg-zinc-700 text-gray-100 p-2 focus:outline-none focus:ring-2 focus:ring-sky-600"
+                    type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="Enter password"
+                    className="rounded-md bg-zinc-700 text-gray-100 p-2 focus:outline-none focus:ring-2 focus:ring-sky-600"
                 />
+
+                {/* password rules */}
+                <div className="mt-2 text-xs space-y-1">
+                    <div className={passwordChecks.length ? "text-green-400" : "text-gray-400"}>
+                    {passwordChecks.length ? "✓" : "•"} At least 7 characters
+                    </div>
+                    <div className={passwordChecks.number ? "text-green-400" : "text-gray-400"}>
+                    {passwordChecks.number ? "✓" : "•"} At least one number
+                    </div>
+                    <div className={passwordChecks.special ? "text-green-400" : "text-gray-400"}>
+                    {passwordChecks.special ? "✓" : "•"} At least one special character
+                    </div>
+                </div>
             </div>
 
             {/* Role Selection */}

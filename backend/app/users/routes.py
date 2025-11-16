@@ -158,3 +158,75 @@ async def get_all_users(db: AsyncIOMotorDatabase = Depends(get_db)):
         return {"ok": False, "data": None, "error": str(e)}
     
 
+class FindByEmailBody(BaseModel):
+    email: str | None = None
+
+@router.post("/find-by-email", response_model=ApiEnvelope)
+async def find_user_by_email(
+    body: FindByEmailBody,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    try:
+        user = await users_repo.find_by_email(db, body.email)
+        if not user:
+            return fail("User not found")
+        return ok(user)
+    except Exception:
+        return fail("Could not fetch user by email")
+    
+class FindNicknameBody(BaseModel):
+    email: str | None = None
+    security_answer : str | None = None
+
+@router.post("/find-nickname", response_model=ApiEnvelope)
+async def find_user_nickname(
+    body: FindNicknameBody,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    try:
+        is_match = await users_repo.find_by_security_answer(
+            db, body.email, body.security_answer
+        )
+        if not is_match:
+            return fail("Incorrect security answer")
+        return ok({"nickname": is_match})
+    except Exception as e:
+        print(f"Error fetching user nickname: {e}")
+        return fail("Fail finding nickname")
+    
+class ResetPasswordBody(BaseModel):
+    user_id: str | None = None
+    new_password : str | None = None
+
+@router.post("/reset-password", response_model=ApiEnvelope)
+async def reset_user_password(
+    body: ResetPasswordBody,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    try:
+        ok_flag = await users_repo.update_password(
+            db, body.user_id, body.new_password
+        )
+        if not ok_flag:
+            return fail("Password reset failed")
+        return ok()
+    except Exception as e:
+        print(f"Error resetting user password: {e}")
+        return fail("Could not reset password")
+    
+class GetUserByEmailBody(BaseModel):
+    email: str | None = None
+
+@router.post("/get-user-by-email", response_model=ApiEnvelope)
+async def get_user_by_id(
+    body: GetUserByEmailBody,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    try:
+        user = await users_repo.get_user_by_email(db, body.email)
+        if not user:
+            return fail("User not found")
+        return ok(user)
+    except Exception as e:
+        print(f"Error fetching user by ID: {e}")
+        return fail("Could not fetch user by ID")

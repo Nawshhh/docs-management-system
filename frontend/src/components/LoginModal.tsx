@@ -7,19 +7,19 @@ import { useNavigate } from "react-router-dom";
 function LoginModal() {
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-
+  
   const handleLogin = async () => {
+
     setLoading(true);
     setError(null);
 
     try {
       const response = await axios.post("http://localhost:8000/auth/login",
-        { email, password },
-        { withCredentials: true }
+        { email, password }
       );
 
       const token = response.data?.data?.access;
@@ -47,6 +47,11 @@ function LoginModal() {
   const handleCreateAccount = () => {
     console.log("Routing to create account");
     navigate("/create-account");
+  }
+
+  const handleForgotPassword = () => {
+    console.log("Routing to forgot password");
+    navigate("/forgot-password");
   }
 
   return (
@@ -77,11 +82,19 @@ function LoginModal() {
           {error}
         </div>
       )}
+        <div className='flex flex-row gap-x-2'>
       <button 
         onClick={handleLogin}
         disabled={loading}
         className='h-8 px-10 bg-sky-700 hover:bg-sky-600 rounded-md text-gray-200 hover:text-gray-300 text-sm cursor-pointer'
         >Log In</button>
+      <button 
+        onClick={handleForgotPassword}
+        disabled={loading}
+        className='h-8 px-6 bg-sky-700 hover:bg-sky-600 rounded-md text-gray-200 hover:text-gray-300 text-sm cursor-pointer'
+        >Forgot Password</button>
+        </div>
+
       <button 
         onClick={handleCreateAccount}
         className='mt-5 h-8 px-10 bg-sky-700 hover:bg-sky-600 rounded-md text-gray-200 hover:text-gray-300 text-sm cursor-pointer'
