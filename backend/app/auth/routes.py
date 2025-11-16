@@ -4,6 +4,7 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from fastapi.responses import JSONResponse
 import bcrypt
 import jwt
+from datetime import datetime, timedelta
 
 from ..db import get_db
 from ..config import settings
@@ -23,27 +24,83 @@ class LoginBody(BaseModel):
     email: str
     password: str
 
+
+
+LOGIN_MAX_ATTEMPTS = 3
+LOGIN_LOCK_MINUTES = 1
+COLL = "users"  # your users collection name
+
 @router.post("/login", response_model=ApiEnvelope)
 async def login(body: LoginBody, db: AsyncIOMotorDatabase = Depends(get_db)):
     try:
-        user = await users_repo.find_by_email(db, body.email)
-        if not user or not bcrypt.checkpw(body.password.encode(), user.password_hash.encode()):
+        email = body.email.lower().strip()
+
+        # 1) Fetch user by email
+        user_doc = await db[COLL].find_one({"email": email})
+        if not user_doc:
+            # optional: you could track attempts per email/IP here too
             return fail("Invalid credentials")
 
+        now = datetime.utcnow()
+        lock_until = now + timedelta(minutes=1)
+
+        # 2) Check if user is currently locked
+        login_lock_until = user_doc.get("login_lock_until")
+        if login_lock_until and login_lock_until > now:
+            remaining = int((login_lock_until - now).total_seconds())
+            return fail(f"Too many login attempts. Try again in {remaining} seconds.")
+
+        # 3) Verify password
+        stored_hash = user_doc.get("password_hash")
+        if not stored_hash or not bcrypt.checkpw(body.password.encode(), stored_hash.encode()):
+            # Wrong password → increment attempts
+            current_attempts = user_doc.get("login_attempts", 0) + 1
+
+            update_doc = {"login_attempts": current_attempts}
+
+            # If 3 or more failures, lock for 1 minute
+            if current_attempts >= LOGIN_MAX_ATTEMPTS:
+                update_doc["login_lock_until"] = now + timedelta(minutes=LOGIN_LOCK_MINUTES)
+                # optionally reset attempts back to 0 once locked
+                update_doc["login_attempts"] = 0
+
+            await db[COLL].update_one(
+                {"_id": user_doc["_id"]},
+                {"$set": update_doc}
+            )
+
+            return fail("Invalid credentials")
+
+        # 4) On successful login, reset attempts & lock
+        await db[COLL].update_one(
+            {"_id": user_doc["_id"]},
+            {"$set": {"login_attempts": 0, "login_lock_until": None}}
+        )
+
+        user_id = str(user_doc["_id"])
+        role = user_doc.get("role")
+        email = user_doc.get("email")
+
+        # If role is stored as a string, just use it;
+        # if you still have an Enum Role, you can map it.
+        role_value = role.value if hasattr(role, "value") else role
+
+        # 5) Create tokens
         access = make_token(
-            user.id,
+            user_id,
             secret=settings.JWT_SECRET,
             ttl_minutes=ACCESS_TTL_MIN,
-            extra={"role": user.role.value, "email": user.email},
+            extra={"role": role_value, "email": email},
         )
         refresh = make_token(
-            user.id,
+            user_id,
             secret=settings.JWT_REFRESH_SECRET,
             ttl_minutes=REFRESH_TTL_MIN,
         )
-        uout = await users_repo.get_user(db, user.id)
-        # convert if needed
-        if hasattr(uout, "dict"): 
+
+        # 6) Load full user representation (as you already do)
+        uout = await users_repo.get_user(db, user_id)
+        if hasattr(uout, "dict"):
             uout = uout.dict()
         if "_id" in uout:
             uout["_id"] = str(uout["_id"])
@@ -59,10 +116,13 @@ async def login(body: LoginBody, db: AsyncIOMotorDatabase = Depends(get_db)):
             max_age=60 * 60 * 24 * 7,
         )
         return response
+
     except Exception as e:
         print("Login error:", e)
         import traceback; traceback.print_exc()
         return fail("Could not login")
+
+
 
 class RefreshBody(BaseModel):
     refresh: str

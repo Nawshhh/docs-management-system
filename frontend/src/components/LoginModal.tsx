@@ -11,36 +11,54 @@ function LoginModal() {
   const [password, setPassword] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [isLocked, setIsLocked] = useState(false);
+  const [lockMessage, setLockMessage] = useState<string | null>(null);
   
   const handleLogin = async () => {
-
     setLoading(true);
     setError(null);
 
     try {
-      const response = await axios.post("http://localhost:8000/auth/login",
-        { email, password }
-      );
+      const response = await axios.post("http://localhost:8000/auth/login", {
+        email,
+        password,
+      });
 
-      const token = response.data?.data?.access;
-      console.log("Login successful, token:", token);
-      if (token) {
-        localStorage.setItem("token", token);
-        if (response.data.data.user.role === 'ADMIN'){
-          navigate("/admin-homepage");
-        } else return
-        
-      } else {
-        console.error("No access token returned:", response.data);
-        setError(response.data?.error);
+      // response.data is your ApiEnvelope
+      const { ok, data, error } = response.data;
+
+      if (!ok) {
+        // This will include:
+        // "Too many login attempts. Try again in 45 seconds."
+        setError(error || "Login failed.");
+        return;
       }
 
-    } catch (error: any) {
-      console.error("Login failed:", error.response?.data || error.message);
+      const token = data?.access;
+      console.log("Login successful, token:", token);
+
+      if (token) {
+        localStorage.setItem("token", token);
+        if (data.user.role === "ADMIN") {
+          navigate("/admin-homepage");
+        } else {
+          // handle other roles if needed
+          return;
+        }
+      } else {
+        console.error("No access token returned:", response.data);
+        setError("No access token returned.");
+      }
+    } catch (err: any) {
+      const backendError = err.response?.data?.error;
+      console.error("Login failed:", err.response?.data || err.message);
+      setError(backendError || "Could not log in.");
     } finally {
       setLoading(false);
-      setEmail("");
-      setPassword("");
+      // optional: if you want to keep what they typed, remove these two lines
+      // setEmail("");
+      // setPassword("");
     }
   };
 

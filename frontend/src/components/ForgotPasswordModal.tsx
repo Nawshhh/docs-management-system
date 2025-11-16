@@ -4,12 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 
-type ApiEnvelope<T = any> = {
-  ok: boolean;
-  data?: T;
-  error?: string;
-};
-
 function ForgotPasswordModal() {
 
     const [nickName, setNickName] = useState<string>("");
@@ -30,29 +24,10 @@ function ForgotPasswordModal() {
 
     const isNewPasswordValid = Object.values(newPasswordChecks).every(Boolean);
 
-    const [failedAttempts, setFailedAttempts] = useState(0);
+
     const [isLocked, setIsLocked] = useState(false);
     const [lockMessage, setLockMessage] = useState<string | null>(null);
 
-    const registerFailure = () => {
-    setFailedAttempts(prev => {
-        const next = prev + 1;
-
-        if (next >= 3) {
-        setIsLocked(true);
-        setLockMessage("Too many attempts. Please try again after 1 minute.");
-
-        // unlock after 60 seconds
-        setTimeout(() => {
-            setIsLocked(false);
-            setFailedAttempts(0);
-            setLockMessage(null);
-        }, 60_000);
-        }
-
-        return next;
-    });
-    };
 
 
     const handleFindEmail = async () => {
