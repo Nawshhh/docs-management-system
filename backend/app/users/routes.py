@@ -4,6 +4,8 @@ from pydantic import BaseModel
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from pymongo.errors import DuplicateKeyError
 
+
+
 from ..deps import require_admin
 from ..db import get_db
 from ..models import Role, UserCreate, UserOut
@@ -12,7 +14,8 @@ from ..repos import audit_logs as logs_repo
 from ..api import ok, fail, ApiEnvelope
 
 from bson import ObjectId
-from datetime import datetime
+from datetime import datetime, timedelta
+
 
 router = APIRouter()
 
@@ -118,7 +121,8 @@ async def create_employee(
         placeholder_id = None
 
         payload = UserCreate(
-            email = body.email, password=body.password, profile={"first_name" : body.first_name, "last_name": body.last_name}, security_answer=body.security_answer
+            email = body.email, password=body.password, profile={"first_name" : body.first_name, "last_name": body.last_name}, security_answer=body.security_answer,
+            reset_attempts=0, reset_lock_until=None
         )
         user = await users_repo.create_user(db, payload)
         await logs_repo.log_event(db, placeholder_id,"USER_CREATE", "USER", user.id, {"role": "EMPLOYEE"})
@@ -178,22 +182,67 @@ class FindNicknameBody(BaseModel):
     email: str | None = None
     security_answer : str | None = None
 
+
 @router.post("/find-nickname", response_model=ApiEnvelope)
 async def find_user_nickname(
     body: FindNicknameBody,
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
+    COLL = "users"
+
     try:
-        is_match = await users_repo.find_by_security_answer(
-            db, body.email, body.security_answer
+        # 1) Fetch user by email
+        user_doc = await db[COLL].find_one(
+            {"email": body.email.lower().strip()}
         )
-        if not is_match:
+        if not user_doc:
+            return fail("User not found")
+
+        now = datetime.utcnow()
+
+        # 2) Check if user is currently locked
+        reset_lock_until = user_doc.get("reset_lock_until")
+        if reset_lock_until and reset_lock_until > now:
+            remaining = int((reset_lock_until - now).total_seconds())
+            return fail(f"Too many attempts. Try again in {remaining} seconds.")
+
+        # 3) compare nn
+        stored_answer = (user_doc.get("security_answer") or "").strip().lower()
+        provided_answer = (body.security_answer or "").strip().lower()
+
+        if stored_answer != provided_answer:
+            # 4) increment failed attempts
+            current_attempts = user_doc.get("reset_attempts", 0) + 1
+
+            update_doc = {"reset_attempts": current_attempts}
+
+            # if 3 or more fail, set lock 1 minute
+            if current_attempts >= 3:
+                update_doc["reset_lock_until"] = now + timedelta(minutes=1)
+                # reset attempts back to 0 after locking
+                update_doc["reset_attempts"] = 0
+
+            await db[COLL].update_one(
+                {"_id": user_doc["_id"]},
+                {"$set": update_doc}
+            )
+
             return fail("Incorrect security answer")
-        return ok({"nickname": is_match})
+
+        # 5) succes, reset attempts + lock
+        await db[COLL].update_one(
+            {"_id": user_doc["_id"]},
+            {"$set": {"reset_attempts": 0, "reset_lock_until": None}}
+        )
+        
+        return ok({"security_answer_valid": True})
+
     except Exception as e:
-        print(f"Error fetching user nickname: {e}")
-        return fail("Fail finding nickname")
-    
+        print("Error in find_user_nickname:", e)
+        return fail("Could not verify security answer")
+
+
+
 class ResetPasswordBody(BaseModel):
     user_id: str | None = None
     new_password : str | None = None

@@ -4,6 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 
+type ApiEnvelope<T = any> = {
+  ok: boolean;
+  data?: T;
+  error?: string;
+};
+
 function ForgotPasswordModal() {
 
     const [nickName, setNickName] = useState<string>("");
@@ -65,28 +71,47 @@ function ForgotPasswordModal() {
     }
 
     const handleVerifyNickname = async () => {
-        if (isLocked) return;
+    if (isLocked) return; // already locked, do nothing
 
-        try {
-            const res = await axios.post("http://localhost:8000/users/find-nickname",
-                { email, security_answer: nickName }
-            );
+    try {
+        const res = await axios.post(
+        "http://localhost:8000/users/find-nickname",
+        { email, security_answer: nickName } // plus security_answer if your backend needs it
+        );
 
-            console.log("Find nickname message:", res.data, email, nickName);
+        console.log("Find nickname message:", res.data, email, nickName);
 
-            if (!res.data.ok) {
-                registerFailure();
-                setMatchedNickname(false);
-                return;
-            }
+        const { ok, error } = res.data;
 
-            setMatchedNickname(true);
+        if (!ok) {
+        // Check if this is the server-side lockout message
+        if (error && error.startsWith("Too many attempts")) {
+            setIsLocked(true);
+            setLockMessage(error); // e.g. "Too many attempts. Try again in 50 seconds."
+        } else {
+            setMatchedNickname(false);
+            setLockMessage(error || "Incorrect nickname.");
+        }
+        return;
+        }
 
-        } catch (error: any) {
-            console.log("Error matching nickname:", error.response?.data || error.message);
-            registerFailure();
-        } 
+        // success: nickname matched
+        setMatchedNickname(true);
+        setLockMessage(null);
+    } catch (error: any) {
+        const serverError = error.response?.data?.error as string | undefined;
+
+        // If backend throws lockout from exception path
+        if (serverError && serverError.startsWith("Too many attempts")) {
+        setIsLocked(true);
+        setLockMessage(serverError);
+        } else {
+        console.log("Error matching nickname:", error.response?.data || error.message);
+        setLockMessage("Something went wrong. Please try again.");
+        }
     }
+    };
+
 
     const handleChangePassword = async () => {
         try {

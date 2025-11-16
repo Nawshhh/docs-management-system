@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
@@ -41,6 +41,9 @@ class UserBase(BaseModel):
     role: Role = Role.EMPLOYEE
     profile: dict[str, Any] | None = None
     security_answer: str | None = None
+    # NEW FIELDS FOR LOCKOUT
+    reset_attempts: int = 0
+    reset_lock_until: Optional[datetime] = None
 
 class UserCreate(UserBase):
     password: str
