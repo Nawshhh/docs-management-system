@@ -28,6 +28,7 @@ function ForgotPasswordModal() {
     const [isLocked, setIsLocked] = useState(false);
     const [lockMessage, setLockMessage] = useState<string | null>(null);
 
+    const [notFoundEmailMessage, setNotFoundEmailMessage] = useState<string | null>(null);
 
 
     const handleFindEmail = async () => {
@@ -38,6 +39,9 @@ function ForgotPasswordModal() {
             console.log("Find email message:", res.data);
             if (!res.data.ok){
                 setFoundEmail(false);
+                if (res.data.error == "User not found") {
+                    setNotFoundEmailMessage("Email not found.");
+                }
             }
             else {
                 setFoundEmail(true);
@@ -158,6 +162,9 @@ function ForgotPasswordModal() {
                         Find Email
                     </button>
                 </div>
+                {!foundEmail && (
+                    <p className="text-red-400 text-xs mt-1">{notFoundEmailMessage}</p>
+                )}
             </div>) : !matchedNickname ? (
             <div className='flex flex-col gap-y-2 mb-4 w-xs'>
                 <span className=' text-gray-200'>Security Question: What is your nickname?</span>

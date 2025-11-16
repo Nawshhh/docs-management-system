@@ -35,12 +35,29 @@ function CreateAccount() {
         });
     };
 
+    const handleMissingFieldsToast = () => {
+        if (!formData.first_name || !formData.last_name || !formData.email || !formData.secuirty_answer) {
+            toast.error("Please fill in all fields correctly.", {
+                    style: {
+                        background: "#393939",
+                        color: "#FFFFFF"
+                    }
+                }
+            );
+            return;
+        }
+
+
+    }
+
     const handleCreateAccount = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!isPasswordValid) {
             return;
-        }
+        } 
+
+
 
         try {
             const res = await axios.post( "http://localhost:8000/users/employee",
@@ -85,30 +102,32 @@ function CreateAccount() {
             onSubmit={handleCreateAccount}
             className="mt-10 w-full max-w-md bg-zinc-800 rounded-lg shadow-lg p-8 flex flex-col gap-5">
             {/* First + Last Name */}
-            <div className="flex gap-4">
-                <div className="flex-1 flex flex-col">
+            <div className="flex gap-4 w-full">
+            <div className="flex-1 flex flex-col">
                 <label className="text-gray-300 text-sm mb-1">First Name</label>
                 <input
-                    type="text"
-                    name="first_name"
-                    value={formData.first_name}
-                    onChange={handleChange}
-                    placeholder="Enter first name"
-                    className="rounded-md bg-zinc-700 text-gray-100 p-2 focus:outline-none focus:ring-2 focus:ring-sky-600"
+                type="text"
+                name="first_name"
+                value={formData.first_name}
+                onChange={handleChange}
+                placeholder="Enter first name"
+                className="w-full rounded-md bg-zinc-700 text-gray-100 p-2 focus:outline-none focus:ring-2 focus:ring-sky-600"
                 />
-                </div>
-                <div className="flex-1 flex flex-col">
+            </div>
+
+            <div className="flex-1 flex flex-col">
                 <label className="text-gray-300 text-sm mb-1">Last Name</label>
                 <input
-                    type="text"
-                    name="last_name"
-                    value={formData.last_name}
-                    onChange={handleChange}
-                    placeholder="Enter last name"
-                    className="rounded-md bg-zinc-700 text-gray-100 p-2 focus:outline-none focus:ring-2 focus:ring-sky-600"
+                type="text"
+                name="last_name"
+                value={formData.last_name}
+                onChange={handleChange}
+                placeholder="Enter last name"
+                className="w-full rounded-md bg-zinc-700 text-gray-100 p-2 focus:outline-none focus:ring-2 focus:ring-sky-600"
                 />
-                </div>
             </div>
+            </div>
+
 
             {/* Email */}
             <div className="flex flex-col">
@@ -179,6 +198,7 @@ function CreateAccount() {
 
             {/* Submit and Cancel Button */}
             <button
+                onClick={handleMissingFieldsToast}
                 type="submit"
                 className="mt-4 bg-sky-700 hover:bg-sky-600 text-white font-semibold py-2 rounded-md transition-colors"
             >

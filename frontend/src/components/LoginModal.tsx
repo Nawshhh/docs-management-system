@@ -11,9 +11,6 @@ function LoginModal() {
   const [password, setPassword] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-
-  const [isLocked, setIsLocked] = useState(false);
-  const [lockMessage, setLockMessage] = useState<string | null>(null);
   
   const handleLogin = async () => {
     setLoading(true);
@@ -56,9 +53,6 @@ function LoginModal() {
       setError(backendError || "Could not log in.");
     } finally {
       setLoading(false);
-      // optional: if you want to keep what they typed, remove these two lines
-      // setEmail("");
-      // setPassword("");
     }
   };
 
