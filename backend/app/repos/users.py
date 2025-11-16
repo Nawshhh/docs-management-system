@@ -36,6 +36,7 @@ async def create_user(db: AsyncIOMotorDatabase, payload: UserCreate, role_overri
         "profile": payload.profile or {},
         "created_at": now,
         "updated_at": now,
+        "security_answer": payload.security_answer,
     }
     res = await db[COLL].insert_one(doc)
     doc["_id"] = res.inserted_id

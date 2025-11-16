@@ -27,6 +27,10 @@ async def ensure_indexes(db: AsyncIOMotorDatabase):
 
 async def log_event(db: AsyncIOMotorDatabase, actor_id: str, action: str, resource_type: str, resource_id: str | None = None, details: dict | None = None) -> AuditLogOut:
     now = datetime.utcnow()
+
+    if actor_id is None:
+        actor_id = "000000000000000000000000"  # system actor
+
     doc = {
         "actor_id": to_obj_id(actor_id),
         "action": action,

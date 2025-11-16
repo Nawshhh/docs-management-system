@@ -15,37 +15,8 @@ function CreateAccount() {
         email: "",
         password: "",
         role: "EMPLOYEE",
+        secuirty_answer: ""
     });
-
-    // Fetch user info on component mount
-    useEffect(() => {
-        fetchUserInfo();
-    }, []);
-
-    const fetchUserInfo = async () => {
-        const token = localStorage.getItem("token");
-        if (!token) {
-            console.log("No token found — user probably logged out");
-            toast.error("No Permission!", {
-                    style: {
-                        background: "#393939",
-                        color: "#FFFFFF"
-                    }
-                }
-            );
-            navigate("/");
-        }
-
-        try {
-            const res = await axios.get("http://localhost:8000/auth/me", {
-            headers: { Authorization: `Bearer ${token}` },
-            withCredentials: true,
-            });
-            console.log("User info fetched:", res.data.data);
-        } catch (error: any) {
-            console.error("User info failed:", error.response?.data || error.message);
-        }
-    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFormData({
@@ -54,33 +25,17 @@ function CreateAccount() {
         });
     };
 
-    const apiBuilder = (role: string): string => {
-    if (role === "ADMIN") return "http://localhost:8000/users/admins";
-    else if (role === "MANAGER") return "http://localhost:8000/users/managers";
-    else if (role === "EMPLOYEE") return "http://localhost:8000/users/employee";
-    else return "http://localhost:8000/users"; // default or fallback
-    };
-
     const handleCreateAccount = async (e: React.FormEvent) => {
         e.preventDefault();
 
         try {
-            const apiString = apiBuilder(formData.role);
-
-            const token = localStorage.getItem("token"); // optional if route needs auth
-            const res = await axios.post( apiString,
+            const res = await axios.post( "http://localhost:8000/users/employee",
                 { 
                     email: formData.email,
                     first_name : formData.first_name,
                     last_name : formData.last_name,  
                     password : formData.password,
-                },
-                {
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                withCredentials: true,
+                    security_answer : formData.secuirty_answer
                 }
             );
 
@@ -92,6 +47,7 @@ function CreateAccount() {
                 email: "",
                 password: "",
                 role: "EMPLOYEE",
+                secuirty_answer: ""
             });
 
             // go back to accounts view
@@ -103,7 +59,7 @@ function CreateAccount() {
     }
 
     const handleCancel = () => {
-        navigate("/accounts");
+        navigate("/");
     }
 
   return (
@@ -179,6 +135,18 @@ function CreateAccount() {
                     <option value="MANAGER">Manager</option>
                     <option value="EMPLOYEE">Employee</option>
                 </select>
+            </div>
+
+            <div className="flex flex-col">
+                <label className="text-gray-300 text-sm mb-1">Security Question: What is your nickname?</label>
+                <input
+                type="text"
+                name="secuirty_answer"
+                value={formData.secuirty_answer}
+                onChange={handleChange}
+                placeholder="Enter security answer"
+                className="rounded-md bg-zinc-700 text-gray-100 p-2 focus:outline-none focus:ring-2 focus:ring-sky-600"
+                />
             </div>
 
             {/* Submit and Cancel Button */}

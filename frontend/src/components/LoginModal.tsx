@@ -44,6 +44,11 @@ function LoginModal() {
     }
   };
 
+  const handleCreateAccount = () => {
+    console.log("Routing to create account");
+    navigate("/create-account");
+  }
+
   return (
     <div className='h-auto w-auto py-8 px-8 rounded-md flex flex-col items-center justify-center'>
       <div className='grid-rows-2 gap-x-8 w-full h-full mb-8'>
@@ -77,6 +82,10 @@ function LoginModal() {
         disabled={loading}
         className='h-8 px-10 bg-sky-700 hover:bg-sky-600 rounded-md text-gray-200 hover:text-gray-300 text-sm cursor-pointer'
         >Log In</button>
+      <button 
+        onClick={handleCreateAccount}
+        className='mt-5 h-8 px-10 bg-sky-700 hover:bg-sky-600 rounded-md text-gray-200 hover:text-gray-300 text-sm cursor-pointer'
+        >Create Account</button>
     </div>
   )
 }

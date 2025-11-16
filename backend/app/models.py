@@ -40,6 +40,7 @@ class UserBase(BaseModel):
     email: str
     role: Role = Role.EMPLOYEE
     profile: dict[str, Any] | None = None
+    security_answer: str | None = None
 
 class UserCreate(UserBase):
     password: str

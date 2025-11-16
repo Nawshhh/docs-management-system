@@ -21,6 +21,7 @@ class CreateUserBody(BaseModel):
     password: str
     first_name: str | None = None
     last_name: str | None = None
+    security_answer: str | None = None
 
 class ChangeRoleBody(BaseModel):
     role: Role  # ADMIN | MANAGER | EMPLOYEE
@@ -111,14 +112,16 @@ async def delete_user(
 async def create_employee(
     body: CreateUserBody,
     db: AsyncIOMotorDatabase = Depends(get_db),
-    _admin = Depends(require_admin),
 ):
     try:
+
+        placeholder_id = None
+
         payload = UserCreate(
-            email = body.email, password=body.password, profile={"first_name" : body.first_name, "last_name": body.last_name}
+            email = body.email, password=body.password, profile={"first_name" : body.first_name, "last_name": body.last_name}, security_answer=body.security_answer
         )
         user = await users_repo.create_user(db, payload)
-        await logs_repo.log_event(db, _admin.id, "USER_CREATE", "USER", user.id, {"role": "EMPLOYEE"})
+        await logs_repo.log_event(db, placeholder_id,"USER_CREATE", "USER", user.id, {"role": "EMPLOYEE"})
         return ok(user)
     except DuplicateKeyError:
         return fail("Email/User already exists")
