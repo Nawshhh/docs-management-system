@@ -66,12 +66,57 @@ async def find_by_security_answer(db: AsyncIOMotorDatabase, email: str, security
     if not doc: return False
     return True
 
-async def update_password(db: AsyncIOMotorDatabase, user_id: str, new_password: str) -> bool:
-    res = await db[COLL].update_one(
-        {"_id": to_obj_id(user_id)},
-        {"$set": {"password_hash": hash_password(new_password), "updated_at": datetime.utcnow()}}
+MAX_HISTORY = 5  # keep last 5 hashes
+
+async def update_password(
+    db: AsyncIOMotorDatabase,
+    user_id: str,
+    new_plain_password: str
+) -> tuple[bool, str | None]:
+    COLL = "users"
+    user_doc = await db[COLL].find_one({"_id": ObjectId(user_id)})
+    if not user_doc:
+        return False, "User not found"
+
+    current_hash = user_doc.get("password_hash")
+    history = user_doc.get("password_history", [])
+
+    # 1) check new password against current + history
+    all_hashes = []
+    if current_hash:
+        all_hashes.append(current_hash)
+    for entry in history:
+        h = entry.get("password_hash")
+        if h:
+            all_hashes.append(h)
+
+    for h in all_hashes:
+        if bcrypt.checkpw(new_plain_password.encode(), h.encode()):
+            return False, "New password was used recently. Please choose a different one."
+
+    # 2) if valid, push current password into history
+    if current_hash:
+        history.insert(0, {
+            "password_hash": current_hash,
+            "changed_at": datetime.utcnow()
+        })
+        history = history[:MAX_HISTORY]
+
+    # 3) hash the new password
+    new_hash = bcrypt.hashpw(new_plain_password.encode(), bcrypt.gensalt()).decode()
+
+    # 4) save
+    await db[COLL].update_one(
+        {"_id": user_doc["_id"]},
+        {
+            "$set": {
+                "password_hash": new_hash,
+                "password_history": history,
+            }
+        }
     )
-    return res.modified_count == 1
+
+    return True, None
 
 async def get_user(db: AsyncIOMotorDatabase, user_id: str) -> Optional[UserOut]:
     doc = await db[COLL].find_one({"_id": to_obj_id(user_id)})

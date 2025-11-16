@@ -18,6 +18,8 @@ function ForgotPasswordModal() {
     const [matchedNickname, setMatchedNickname] = useState<boolean>(false);
     const [newPassword, setNewPassword] = useState<string>("");
 
+    const [changeError, setChangeError] = useState<string | null>(null);
+
     const navigate = useNavigate();
 
     const newPasswordChecks = {
@@ -115,6 +117,7 @@ function ForgotPasswordModal() {
 
     const handleChangePassword = async () => {
         try {
+            setChangeError(null);
             const userRes = await axios.post(
             "http://localhost:8000/users/get-user-by-email",
             { email }
@@ -128,12 +131,19 @@ function ForgotPasswordModal() {
             );
 
             console.log("Change password message:", res.data);
-            if (res.data.ok){
-                handleBackToLogin();
-                toast.success("Password updated successfully!");
+
+            if (!res.data.ok) {
+            // backend may send: "New password was used recently..."
+            setChangeError(res.data.error || "Could not change password.");
+            return;
             }
+
+            toast.success("Password changed successfully.");
+            setNewPassword("");
+            navigate("/");
         } catch (error: any) {
-            console.log("Error changing password:", error.response?.data || error.message);
+            const serverErr = error.response?.data?.error;
+            setChangeError(serverErr || "Something went wrong. Please try again.");
         }
     };
 
@@ -227,6 +237,11 @@ function ForgotPasswordModal() {
                         {newPasswordChecks.special ? "✓" : "•"} At least one special character
                     </div>
                     </div>
+
+
+                    {changeError && (
+                        <p className="text-red-400 text-xs mt-1">{changeError}</p>
+                    )}
 
                     <button 
                     onClick={handleChangePassword}  // if you have a handler

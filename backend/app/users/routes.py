@@ -234,7 +234,7 @@ async def find_user_nickname(
             {"_id": user_doc["_id"]},
             {"$set": {"reset_attempts": 0, "reset_lock_until": None}}
         )
-        
+
         return ok({"security_answer_valid": True})
 
     except Exception as e:
@@ -253,11 +253,11 @@ async def reset_user_password(
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     try:
-        ok_flag = await users_repo.update_password(
+        ok_flag, err_msg = await users_repo.update_password(
             db, body.user_id, body.new_password
         )
         if not ok_flag:
-            return fail("Password reset failed")
+            return fail(err_msg or "Password reset failed")
         return ok()
     except Exception as e:
         print(f"Error resetting user password: {e}")

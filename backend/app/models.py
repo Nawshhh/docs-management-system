@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any, Optional, List
 
 from pydantic import BaseModel, Field
 
@@ -36,14 +36,18 @@ class TsMixin(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
+class PasswordHistoryEntry(BaseModel):
+    password_hash: str
+    changed_at: datetime
+
 class UserBase(BaseModel):
     email: str
     role: Role = Role.EMPLOYEE
     profile: dict[str, Any] | None = None
     security_answer: str | None = None
-    # NEW FIELDS FOR LOCKOUT
     reset_attempts: int = 0
     reset_lock_until: Optional[datetime] = None
+    password_history: List[PasswordHistoryEntry] = []
 
 class UserCreate(UserBase):
     password: str
