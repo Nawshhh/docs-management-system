@@ -17,9 +17,10 @@ function ForgotPasswordModal() {
     const navigate = useNavigate();
 
     const newPasswordChecks = {
-    length: newPassword.length >= 7,
-    number: /\d/.test(newPassword),
-    special: /[^A-Za-z0-9]/.test(newPassword),
+        length: newPassword.length >= 7,
+        number: /\d/.test(newPassword),
+        special: /[^A-Za-z0-9]/.test(newPassword),
+        max_length: newPassword.length <= 20
     };
 
     const isNewPasswordValid = Object.values(newPasswordChecks).every(Boolean);
@@ -153,7 +154,6 @@ function ForgotPasswordModal() {
                     >
                         Back to Log In
                     </button>
-
                     <button
                         onClick={handleFindEmail}
                         className="h-10 flex-1 bg-sky-700 hover:bg-sky-600 rounded-md 
@@ -209,15 +209,18 @@ function ForgotPasswordModal() {
 
                     {/* Live password rules */}
                     <div className="mt-2 text-xs space-y-1">
-                    <div className={newPasswordChecks.length ? "text-green-400" : "text-gray-400"}>
-                        {newPasswordChecks.length ? "✓" : "•"} At least 7 characters
-                    </div>
-                    <div className={newPasswordChecks.number ? "text-green-400" : "text-gray-400"}>
-                        {newPasswordChecks.number ? "✓" : "•"} At least one number
-                    </div>
-                    <div className={newPasswordChecks.special ? "text-green-400" : "text-gray-400"}>
-                        {newPasswordChecks.special ? "✓" : "•"} At least one special character
-                    </div>
+                        <div className={!newPasswordChecks.max_length ? "text-gray-400" : "text-green-400"}>
+                            {newPasswordChecks.length ? "✓" : "•"} No more than 20 characters
+                        </div>
+                        <div className={newPasswordChecks.length ? "text-green-400" : "text-gray-400"}>
+                            {newPasswordChecks.length ? "✓" : "•"} At least 7 characters
+                        </div>
+                        <div className={newPasswordChecks.number ? "text-green-400" : "text-gray-400"}>
+                            {newPasswordChecks.number ? "✓" : "•"} At least one number
+                        </div>
+                        <div className={newPasswordChecks.special ? "text-green-400" : "text-gray-400"}>
+                            {newPasswordChecks.special ? "✓" : "•"} At least one special character
+                        </div>
                     </div>
 
 
