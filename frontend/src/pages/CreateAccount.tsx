@@ -15,7 +15,10 @@ function CreateAccount() {
     password: "",
     role: "EMPLOYEE",
     secuirty_answer: "", // note: still spelled this way in your state
+    manager_id: "",
   });
+
+  // const [managerList, setManagerList] = useState<Array<{_id: string, email: string}>>([]);
 
   const password = formData.password || "";
 
@@ -74,6 +77,7 @@ function CreateAccount() {
         last_name: formData.last_name,
         password: formData.password,
         security_answer: formData.secuirty_answer, // backend uses `security_answer`
+        manager_id: formData.manager_id
       });
 
       console.log("Create user success:", res.data);
@@ -85,6 +89,7 @@ function CreateAccount() {
         password: "",
         role: "EMPLOYEE",
         secuirty_answer: "",
+        manager_id: ""
       });
 
       handleCancel();
@@ -93,6 +98,16 @@ function CreateAccount() {
       toast.error("Failed to create account.");
     }
   };
+
+  // const handleFetchManagers = async () => {
+  //   try {
+  //     const res = await axios.get("http://localhost:8000/users/managers");
+  //     const managers = res.data.data;
+  //     setManagerList(managers);
+  //   } catch (error) {
+  //     console.error("Error fetching managers:", error);
+  //   }
+  // };
 
   const handleCancel = () => {
     navigate("/");
@@ -174,9 +189,9 @@ function CreateAccount() {
           </div>
         </div>
 
-        {/* Role Selection */}
-        <div className="flex flex-col">
-          <label className="text-gray-300 text-sm mb-1">Role</label>
+
+        {/* <div className="flex flex-col">
+          <label className="text-gray-300 text-sm mb-1">Select Manager</label>
           <select
             name="role"
             value={formData.role}
@@ -188,7 +203,7 @@ function CreateAccount() {
             <option value="MANAGER">Manager</option>
             <option value="EMPLOYEE">Employee</option>
           </select>
-        </div>
+        </div> */}
 
         {/* Security Question */}
         <div className="flex flex-col">

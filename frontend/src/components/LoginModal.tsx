@@ -54,8 +54,8 @@ function LoginModal() {
         localStorage.setItem("token", token);
         if (data.user.role === "ADMIN") {
           navigate("/admin-homepage");
-        } else {
-          // handle other roles if needed
+        } else if (data.user.role === "MANAGER") {
+          navigate("/manager-homepage");
           return;
         }
       } else {

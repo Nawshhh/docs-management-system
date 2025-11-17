@@ -55,6 +55,7 @@ class UserBase(BaseModel):
     last_use_at: Optional[datetime] = None
     last_use_success: Optional[bool] = None
     last_use_ip: Optional[str] = None
+    manager_id: Optional[str] = None  # stores the _id of the MANAGER user
 
 class UserCreate(UserBase):
     password: str

@@ -14,6 +14,8 @@ import Roles from './pages/Roles';
 import Logs from './pages/Logs';
 import Documents from './pages/Documents';
 import ForgotPassword from './pages/ForgotPassword';
+import ViewEmployeePage from './pages/ViewEmployeePage';
+import AssignScope from './pages/AssignScope';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -29,6 +31,8 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/system-logs" element={<Logs/>}/>
         <Route path="/documents" element={<Documents/>}/>
         <Route path="/forgot-password" element={<ForgotPassword/>}></Route>
+        <Route path="/view-scope" element={<ViewEmployeePage/>}></Route>
+        <Route path="/assign-scope" element={<AssignScope/>}></Route>
       </Routes>
       <Toaster position="bottom-right" reverseOrder={true}/>
     </BrowserRouter>

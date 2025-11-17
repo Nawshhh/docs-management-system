@@ -84,7 +84,7 @@ function AdminHomepage() {
     if (dest === 1) navigate("/accounts");
     if (dest === 2) navigate("/roles", { state: { my_id: user.id } });
     if (dest === 3) navigate("/system-logs");
-    if (dest === 4) navigate("/documents");
+    if (dest === 4) navigate("/assign-scope");
   };
 
   if (loading) {
@@ -129,7 +129,7 @@ function AdminHomepage() {
           onClick={() => handleButtonClick(4)}
           className="flex items-center justify-center bg-slate-700 hover:bg-slate-600 rounded-md h-20 cursor-pointer"
         >
-          Documents
+          Assign Scope
         </button>
       </div>
 

@@ -15,6 +15,7 @@ from ..api import ok, fail, ApiEnvelope
 
 from bson import ObjectId
 from datetime import datetime, timedelta
+from typing import Optional
 
 
 router = APIRouter()
@@ -25,6 +26,7 @@ class CreateUserBody(BaseModel):
     first_name: str | None = None
     last_name: str | None = None
     security_answer: str | None = None
+    manager_id: Optional[str] = None 
 
 class ChangeRoleBody(BaseModel):
     role: Role  # ADMIN | MANAGER | EMPLOYEE
@@ -52,7 +54,6 @@ async def create_admin(
 async def create_manager(
     body: CreateUserBody,
     db: AsyncIOMotorDatabase = Depends(get_db),
-    _admin = Depends(require_admin),
 ):
     try:
         payload = UserCreate(
@@ -60,12 +61,87 @@ async def create_manager(
             profile={"first_name": body.first_name, "last_name": body.last_name}
         )
         user = await users_repo.create_user(db, payload, role_override=Role.MANAGER)
-        await logs_repo.log_event(db, _admin.id, "USER_CREATE", "USER", user.id, {"role": "MANAGER"})
+        await logs_repo.log_event(db, user.id, "USER_CREATE", "USER", user.id, {"role": "MANAGER"})
         return ok(user)
     except DuplicateKeyError:
         return fail("Email already exists")
     except Exception:
         return fail("Could not create manager")
+
+from bson import ObjectId
+
+@router.get("/manager/{manager_id}/employees", response_model=ApiEnvelope)
+async def get_manager_employees(
+    manager_id: str,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    try:
+        docs = db["users"].find({
+            "role": "EMPLOYEE",
+            "manager_id": ObjectId(manager_id),   # 👈 FIX
+        })
+
+        employees = []
+        async for doc in docs:
+            doc["id"] = str(doc["_id"])
+            doc["_id"] = str(doc["_id"])
+            if "manager_id" in doc:
+                doc["manager_id"] = str(doc["manager_id"])
+            doc.pop("password_hash", None)
+            employees.append(doc)
+
+        return ok(employees)
+    except Exception as e:
+        print("Error listing employees for manager:", e)
+        return fail("Could not fetch employees for manager")
+
+
+
+@router.get("/get-managers", response_model=ApiEnvelope)
+async def get_managers(
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    try:
+        cursor = db["users"].find({"role": "MANAGER"})  # or Role.MANAGER.value if using Enum
+
+        managers = []
+        async for doc in cursor:
+            # normalize _id -> id as string
+            doc["_id"] = str(doc["_id"])
+            #  emove internal fields to avoid exposure
+            doc.pop("password_hash", None)
+            managers.append(doc)
+        return ok(managers) 
+    except Exception as e:
+        print("Error listing managers:", e)
+        return fail("Could not fetch managers")
+    
+@router.get("/get-employees", response_model=ApiEnvelope)
+async def get_employees(
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    try:
+        cursor = db["users"].find({"role": "EMPLOYEE"})
+
+        employees = []
+        async for doc in cursor:
+            # normalize _id -> string
+            if "_id" in doc:
+                doc["_id"] = str(doc["_id"])
+
+            # if you also have manager_id as ObjectId, convert it too
+            if "manager_id" in doc and isinstance(doc["manager_id"], ObjectId):
+                doc["manager_id"] = str(doc["manager_id"])
+
+            # remove internal fields you don't want to expose
+            doc.pop("password_hash", None)
+
+            employees.append(doc)
+
+        return ok(employees)
+    except Exception as e:
+        print("Error listing employees:", e)
+        return fail("Could not fetch employees")
 
 @router.patch("/{user_id}/role", response_model=ApiEnvelope)
 async def change_role(
@@ -94,6 +170,26 @@ async def change_role(
     except Exception:
         return fail("Could not change role")
 
+class AssignManagerBody(BaseModel):
+    employee_id: str
+    manager_id: str
+
+@router.put("/assign-manager", response_model=ApiEnvelope)
+async def assign_manager(
+    body: AssignManagerBody,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    try:
+        # update employee doc
+        await db["users"].update_one(
+            {"_id": ObjectId(body.employee_id)},
+            {"$set": {"manager_id": ObjectId(body.manager_id)}}
+        )
+        return ok()
+    except Exception as e:
+        print("Error assigning manager:", e)
+        return fail("Could not assign manager")
+
 @router.delete("/{user_id}", response_model=ApiEnvelope)
 async def delete_user(
     user_id: str,
@@ -117,19 +213,31 @@ async def create_employee(
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     try:
-
-        placeholder_id = None
-
         payload = UserCreate(
-            email = body.email, password=body.password, profile={"first_name" : body.first_name, "last_name": body.last_name}, security_answer=body.security_answer,
-            reset_attempts=0, reset_lock_until=None
+            email=body.email,
+            password=body.password,
+            profile={"first_name": body.first_name, "last_name": body.last_name},
+            security_answer=body.security_answer,
+            reset_attempts=0,
+            reset_lock_until=None,
+            manager_id=body.manager_id,  
         )
+
         user = await users_repo.create_user(db, payload)
-        await logs_repo.log_event(db, user.id,"USER_CREATE", "USER", user.id, {"role": "EMPLOYEE"})
+
+        await logs_repo.log_event(
+            db,
+            user.id,
+            "USER_CREATE",
+            "USER",
+            user.id,
+            {"role": "EMPLOYEE", "manager_id": body.manager_id},
+        )
+
         return ok(user)
     except DuplicateKeyError:
         return fail("Email/User already exists")
-    
+
 
 def serialize_user(user):
     """Convert MongoDB types into JSON-safe values"""
