@@ -24,25 +24,30 @@ class LoginBody(BaseModel):
     email: str
     password: str
 
-
-
 LOGIN_MAX_ATTEMPTS = 3
 LOGIN_LOCK_MINUTES = 1
 COLL = "users"  # your users collection name
 
 @router.post("/login", response_model=ApiEnvelope)
-async def login(body: LoginBody, db: AsyncIOMotorDatabase = Depends(get_db)):
+async def login(body: LoginBody, request: Request, db: AsyncIOMotorDatabase = Depends(get_db)):
     try:
         email = body.email.lower().strip()
 
         # 1) Fetch user by email
         user_doc = await db[COLL].find_one({"email": email})
         if not user_doc:
-            # optional: you could track attempts per email/IP here too
+            # you could also track attempts per IP/email here if you like
             return fail("Invalid credentials")
 
         now = datetime.utcnow()
-        lock_until = now + timedelta(minutes=1)
+        client_ip = request.client.host if request.client else None
+
+        # Capture PREVIOUS last use before we overwrite it
+        prev_last_use = {
+            "at": user_doc.get("last_use_at"),
+            "success": user_doc.get("last_use_success"),
+            "ip": user_doc.get("last_use_ip"),
+        }
 
         # 2) Check if user is currently locked
         login_lock_until = user_doc.get("login_lock_until")
@@ -53,10 +58,15 @@ async def login(body: LoginBody, db: AsyncIOMotorDatabase = Depends(get_db)):
         # 3) Verify password
         stored_hash = user_doc.get("password_hash")
         if not stored_hash or not bcrypt.checkpw(body.password.encode(), stored_hash.encode()):
-            # Wrong password → increment attempts
+            # Wrong password → increment attempts + record last use (failed)
             current_attempts = user_doc.get("login_attempts", 0) + 1
 
-            update_doc = {"login_attempts": current_attempts}
+            update_doc = {
+                "login_attempts": current_attempts,
+                "last_use_at": now,
+                "last_use_success": False,
+                "last_use_ip": client_ip,
+            }
 
             # If 3 or more failures, lock for 1 minute
             if current_attempts >= LOGIN_MAX_ATTEMPTS:
@@ -66,15 +76,23 @@ async def login(body: LoginBody, db: AsyncIOMotorDatabase = Depends(get_db)):
 
             await db[COLL].update_one(
                 {"_id": user_doc["_id"]},
-                {"$set": update_doc}
+                {"$set": update_doc}  # ✅ fix: don't wrap update_doc in another dict
             )
 
             return fail("Invalid credentials")
 
-        # 4) On successful login, reset attempts & lock
+        # 4) On successful login, reset attempts & lock + record last use (success)
+        update_doc = {
+            "login_attempts": 0,
+            "login_lock_until": None,
+            "last_use_at": now,
+            "last_use_success": True,
+            "last_use_ip": client_ip,
+        }
+
         await db[COLL].update_one(
             {"_id": user_doc["_id"]},
-            {"$set": {"login_attempts": 0, "login_lock_until": None}}
+            {"$set": update_doc}
         )
 
         user_id = str(user_doc["_id"])
@@ -105,7 +123,13 @@ async def login(body: LoginBody, db: AsyncIOMotorDatabase = Depends(get_db)):
         if "_id" in uout:
             uout["_id"] = str(uout["_id"])
 
-        envelope = ok({"access": access, "user": uout})
+        # ✅ include previous last use in response
+        envelope = ok({
+            "access": access,
+            "user": uout,
+            "last_use": prev_last_use,
+        })
+
         response = JSONResponse(content=jsonable_encoder(envelope))
         response.set_cookie(
             key="refresh_token",
@@ -121,7 +145,6 @@ async def login(body: LoginBody, db: AsyncIOMotorDatabase = Depends(get_db)):
         print("Login error:", e)
         import traceback; traceback.print_exc()
         return fail("Could not login")
-
 
 
 class RefreshBody(BaseModel):

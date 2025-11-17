@@ -1,6 +1,7 @@
 import {useState} from 'react';
 import axios from 'axios';
 import { useNavigate } from "react-router-dom";
+import toast from 'react-hot-toast';
 
 
 
@@ -11,10 +12,12 @@ function LoginModal() {
   const [password, setPassword] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   
   const handleLogin = async () => {
     setLoading(true);
     setError(null);
+    setInfo(null);
 
     try {
       const response = await axios.post("http://localhost:8000/auth/login", {
@@ -22,18 +25,32 @@ function LoginModal() {
         password,
       });
 
-      // response.data is your ApiEnvelope
       const { ok, data, error } = response.data;
 
       if (!ok) {
-        // This will include:
-        // "Too many login attempts. Try again in 45 seconds."
         setError(error || "Login failed.");
         return;
       }
 
       const token = data?.access;
+      const lastUse = data?.last_use;
       console.log("Login successful, token:", token);
+
+      if (lastUse?.at) {
+        const date = new Date(lastUse.at);
+        const statusText = lastUse.success ? "successful" : "failed";
+        const ipText = lastUse.ip ? ` from IP ${lastUse.ip}` : "";
+
+        toast(`Last account use: ${date.toLocaleString()} (${statusText}${ipText}).`, {
+          style: {
+            background: "#393939",
+            color: "#ffffff",
+            borderRadius: "8px",
+            padding: "12px 16px",
+          },
+          icon: lastUse.success ? "🟢" : "🔴",
+        });
+      }
 
       if (token) {
         localStorage.setItem("token", token);

@@ -48,6 +48,9 @@ class UserBase(BaseModel):
     reset_attempts: int = 0
     reset_lock_until: Optional[datetime] = None
     password_history: List[PasswordHistoryEntry] = []
+    last_use_at: Optional[datetime] = None
+    last_use_success: Optional[bool] = None
+    last_use_ip: Optional[str] = None
 
 class UserCreate(UserBase):
     password: str

@@ -174,7 +174,7 @@ function CreateAccount() {
                 <select
                     name="role"
                     value={formData.role}
-                    disabled={true}
+                    disabled={false}
                     onChange={handleChange}
                     className="rounded-md bg-zinc-700 text-gray-100 p-2 focus:outline-none focus:ring-2 focus:ring-sky-600"
                 >
