@@ -12,12 +12,10 @@ function LoginModal() {
   const [password, setPassword] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
   
   const handleLogin = async () => {
     setLoading(true);
     setError(null);
-    setInfo(null);
 
     try {
       const response = await axios.post("http://localhost:8000/auth/login", {

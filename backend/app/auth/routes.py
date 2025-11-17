@@ -12,6 +12,7 @@ from ..api import ok, fail, ApiEnvelope
 from ..repos import users as users_repo
 from ..models import UserOut, Role
 from .jwt import make_token, verify_token
+from ..repos import audit_logs as logs_repo
 
 from pydantic import BaseModel
 
@@ -89,6 +90,8 @@ async def login(body: LoginBody, request: Request, db: AsyncIOMotorDatabase = De
             "last_use_success": True,
             "last_use_ip": client_ip,
         }
+
+        await logs_repo.log_event(db, user_doc.get("_id"), "USER_LOGIN", "USER", user_doc.get("_id"), {"role": user_doc.get("role")})
 
         await db[COLL].update_one(
             {"_id": user_doc["_id"]},

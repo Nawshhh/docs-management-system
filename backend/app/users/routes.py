@@ -125,7 +125,7 @@ async def create_employee(
             reset_attempts=0, reset_lock_until=None
         )
         user = await users_repo.create_user(db, payload)
-        await logs_repo.log_event(db, placeholder_id,"USER_CREATE", "USER", user.id, {"role": "EMPLOYEE"})
+        await logs_repo.log_event(db, user.id,"USER_CREATE", "USER", user.id, {"role": "EMPLOYEE"})
         return ok(user)
     except DuplicateKeyError:
         return fail("Email/User already exists")

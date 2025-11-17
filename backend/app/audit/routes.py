@@ -48,7 +48,7 @@ async def list_audit_logs(
             log_dict["actor_id"] = str(log_dict.get("actor_id", ""))
             log_dict["resource_id"] = str(log_dict.get("resource_id", ""))
 
-            # ✅ Format timestamps
+            # Format timestamps
             log_dict["created_at"] = format_datetime(log_dict.get("created_at"))
             log_dict["updated_at"] = format_datetime(log_dict.get("updated_at"))
 

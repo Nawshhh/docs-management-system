@@ -5,82 +5,138 @@ import { useNavigate } from "react-router-dom";
 import toast from 'react-hot-toast';
 
 function AdminHomepage() {
-    const navigate = useNavigate();
-    const [user, setUser] = useState<any>(null);
-    const [firstName, setFirstName] = useState<string | null>("User");
-    const [lastName, setLastName] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const [user, setUser] = useState<any>(null);
+  const [firstName, setFirstName] = useState<string | null>("User");
+  const [lastName, setLastName] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-    // Fetch user info on component mount
-    useEffect(() => {
-        fetchUserInfo();
-    }, []);
+  useEffect(() => {
+    fetchUserInfo();
+  }, []);
 
-    const fetchUserInfo = async () => {
-        const token = localStorage.getItem("token");
-        if (!token) {
-            console.log("No token found — user probably logged out");
-            toast.error("No Permission!", {
-                    style: {
-                        background: "#393939",
-                        color: "#FFFFFF"
-                    }
-                }
-            );
-            navigate("/");
-        }
-
-        try {
-            const res = await axios.get("http://localhost:8000/auth/me", {
-            headers: { Authorization: `Bearer ${token}` },
-            withCredentials: true,
-            });
-            console.log("User info fetched:", res.data.data.id);
-            setUser(res.data.data);
-            setFirstName(res.data.data.profile.first_name);
-            setLastName(res.data.data.profile.last_name)
-        } catch (error: any) {
-            console.error("User info failed:", error.response?.data || error.message);
-        }
-    };
-
-    const handleButtonClick = (dest: number) => {
-        if (dest === 1) navigate("/accounts");
-        if (dest === 2) navigate("/roles", { state: {my_id: user.id} });
-        if (dest === 3) navigate("/system-logs");
-        if (dest === 4) navigate("/documents");
+  const fetchUserInfo = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.log("No token found — user probably logged out");
+      toast.error("No permission. Admins only.", {
+        style: {
+          background: "#393939",
+          color: "#FFFFFF",
+        },
+      });
+      navigate("/");
+      return; // important so we don't continue
     }
 
-  return (
-    <div className='w-screen h-screen flex flex-col items-center justify-center bg-zinc-900 px-20 md:px-80 sm:px-10'>
-        <div className='text-gray-200 text-3xl font-bold'>
-            {user ? `Hello Admin, ${firstName} ${lastName}` : 'Loading...'}
-        </div>
+    try {
+      const res = await axios.get("http://localhost:8000/auth/me", {
+        headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true,
+      });
 
-        <div className='grid grid-cols-2 gap-6 w-full my-10 text-gray-200 text-xl font-semibold'>
-            <button 
-                onClick={() => handleButtonClick(1)}
-                className='flex items-center justify-center bg-slate-700 hover:bg-slate-600 rounded-md h-20 cursor-pointer'>
-                Accounts
-            </button>
-            <button  
-                onClick={() => handleButtonClick(2)}
-                className='flex items-center justify-center bg-slate-700 hover:bg-slate-600 rounded-md h-20 cursor-pointer'>
-                Roles
-            </button>
-            <button 
-                onClick={() => handleButtonClick(3)}
-                className='flex items-center justify-center bg-slate-700 hover:bg-slate-600 rounded-md h-20 cursor-pointer'>
-                System Logs
-            </button>
-            <button  
-                onClick={() => handleButtonClick(4)}
-                className='flex items-center justify-center bg-slate-700 hover:bg-slate-600 rounded-md h-20 cursor-pointer'>
-                Documents
-            </button>
-        </div>
-        <LogoutButton/>
+      const userData = res.data.data;
+      console.log("User info fetched:", userData.id);
+
+      // role check: only allow ADMIN
+      if (userData.role !== "ADMIN") {
+        toast.error("Access denied. Admins only.", {
+          style: {
+            background: "#393939",
+            color: "#FFFFFF",
+          },
+        });
+        navigate("/");
+        return;
+      }
+
+      setUser(userData);
+      setFirstName(userData.profile?.first_name || "Admin");
+      setLastName(userData.profile?.last_name || "");
+    } catch (error: any) {
+      console.error("User info failed:", error.response?.data || error.message);
+
+      // If token is invalid/expired, force logout
+      if (error.response?.status === 401) {
+        toast.error("Session expired. Please log in again.", {
+          style: {
+            background: "#393939",
+            color: "#FFFFFF",
+          },
+        });
+        localStorage.removeItem("token");
+        navigate("/");
+      } else {
+        toast.error("Unable to verify permissions.", {
+          style: {
+            background: "#393939",
+            color: "#FFFFFF",
+          },
+        });
+        navigate("/");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleButtonClick = (dest: number) => {
+    if (dest === 1) navigate("/accounts");
+    if (dest === 2) navigate("/roles", { state: { my_id: user.id } });
+    if (dest === 3) navigate("/system-logs");
+    if (dest === 4) navigate("/documents");
+  };
+
+  if (loading) {
+    return (
+      <div className="w-screen h-screen flex items-center justify-center bg-zinc-900">
+        <span className="text-gray-200 text-xl">Checking admin permissions...</span>
+      </div>
+    );
+  }
+
+  // In case something slipped and user isn't set, safety guard
+  if (!user) {
+    return null;
+  }
+
+  return (
+    <div className="w-screen h-screen flex flex-col items-center justify-center bg-zinc-900 px-20 md:px-80 sm:px-10">
+      <div className="text-gray-200 text-3xl font-bold">
+        {`Hello Admin, ${firstName} ${lastName || ""}`}
+      </div>
+
+      <div className="grid grid-cols-2 gap-6 w-full my-10 text-gray-200 text-xl font-semibold">
+        <button
+          onClick={() => handleButtonClick(1)}
+          className="flex items-center justify-center bg-slate-700 hover:bg-slate-600 rounded-md h-20 cursor-pointer"
+        >
+          Accounts
+        </button>
+        <button
+          onClick={() => handleButtonClick(2)}
+          className="flex items-center justify-center bg-slate-700 hover:bg-slate-600 rounded-md h-20 cursor-pointer"
+        >
+          Roles
+        </button>
+        <button
+          onClick={() => handleButtonClick(3)}
+          className="flex items-center justify-center bg-slate-700 hover:bg-slate-600 rounded-md h-20 cursor-pointer"
+        >
+          System Logs
+        </button>
+        <button
+          onClick={() => handleButtonClick(4)}
+          className="flex items-center justify-center bg-slate-700 hover:bg-slate-600 rounded-md h-20 cursor-pointer"
+        >
+          Documents
+        </button>
+      </div>
+
+      <LogoutButton />
     </div>
-  )
+  );
 }
+
 
 export default AdminHomepage
