@@ -362,27 +362,21 @@ async def reject_document(
 @router.delete("/{doc_id}/attachments", response_model=ApiEnvelope)
 async def delete_document(
     doc_id: str,
-    user_id: str,  # query param ?user_id=...
+    user_id: str,  # passed as query param ?user_id=...
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     """
     Public: caller passes user_id; repo handles ownership logic.
     """
     try:
-        docs = await docs_repo.get_document(db, doc_id)
-        if not docs:
-            return fail("Document not found")
-        elif docs.status != DocStatus.DRAFT:
-            return fail("Only the owner can delete attachments while status is DRAFT")
-
-        is_deleted = await docs_repo.delete_document(db, doc_id, user_id)
+        is_deleted = await docs_repo.delete_document(db, doc_id)
         if not is_deleted:
             return fail("Only the owner can delete attachments")
 
         await logs_repo.log_event(
             db,
             user_id,
-            "DOC_UPDATE",
+            "DOC_DELETE",
             "DOCUMENT",
             doc_id,
         )

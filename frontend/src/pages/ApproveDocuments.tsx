@@ -92,76 +92,80 @@ function ApproveDocuments() {
     }
   };
 
-  return (
+    return (
     <div className="w-screen h-screen flex flex-col items-center justify-center bg-zinc-900 px-20 md:px-80 sm:px-10">
-      <div className="text-gray-200 text-3xl font-bold mb-6">
+        <div className="text-gray-200 text-3xl font-bold mb-6">
         Approve Documents
-      </div>
+        </div>
 
-      <div className="w-full max-w-4xl bg-zinc-800 rounded-lg shadow-lg p-6 mb-6">
+        <div className="w-full max-w-4xl bg-zinc-800 rounded-lg shadow-lg p-6 mb-6">
         {loading ? (
-          <div className="text-gray-200 text-sm">Loading documents...</div>
+            <div className="text-gray-200 text-sm">Loading documents...</div>
         ) : documents.length === 0 ? (
-          <div className="text-gray-400 text-sm">
+            <div className="text-gray-400 text-sm">
             No pending documents to approve.
-          </div>
+            </div>
         ) : (
-          <div className="overflow-x-auto">
+            <div className="overflow-x-auto">
             <table className="min-w-full text-left text-sm text-gray-200">
-              <thead>
+                <thead>
                 <tr className="border-b border-zinc-700">
-                  <th className="py-2 px-3">Document Name</th>
-                  <th className="py-2 px-3">Owner (owner_id)</th>
-                  <th className="py-2 px-3">Status</th>
-                  <th className="py-2 px-3 text-center">Approve</th>
+                    <th className="py-2 px-3">Document Name</th>
+                    <th className="py-2 px-3">Owner (owner_id)</th>
+                    <th className="py-2 px-3">Status</th>
+                    <th className="py-2 px-3 text-center">Approve</th>
                 </tr>
-              </thead>
-              <tbody>
+                </thead>
+                <tbody>
                 {documents.map((doc, idx) => {
-                  const docId = doc.id || doc._id || String(idx);
-                  const docName = doc.title || "Untitled";
-                  const owner = doc.owner_id || "—";
+                    const docId = doc.id || doc._id || String(idx);
+                    const docName = doc.title || "Untitled";
+                    const owner = doc.owner_id || "—";
+                    const isThisApproving = approvingId === (doc.id || doc._id);
 
-                  return (
+                    return (
                     <tr
-                      key={docId}
-                      className="border-b border-zinc-700 hover:bg-zinc-700/40"
+                        key={docId}
+                        className="border-b border-zinc-700 hover:bg-zinc-700/40"
                     >
-                      <td className="py-2 px-3">{docName}</td>
-                      <td className="py-2 px-3">{owner}</td>
-                      <td className="py-2 px-3">{doc.status || "PENDING_REVIEW"}</td>
-                      <td className="py-2 px-3 text-center">
+                        <td className="py-2 px-3">{docName}</td>
+                        <td className="py-2 px-3">{owner}</td>
+                        <td className="py-2 px-3">
+                        {doc.status || "PENDING_REVIEW"}
+                        </td>
+                        <td className="py-2 px-3 text-center">
                         <button
-                          onClick={() => handleApprove(doc.id || doc._id)}
-                          disabled={approvingId === (doc.id || doc._id)}
-                          className={`h-8 w-8 flex items-center justify-center rounded-full text-sm font-bold
+                            onClick={() => handleApprove(doc.id || doc._id)}
+                            disabled={isThisApproving}
+                            className={`px-4 py-1 rounded-md text-sm font-medium
                             ${
-                              approvingId === (doc.id || doc._id)
+                                isThisApproving
                                 ? "bg-sky-900 text-gray-400 cursor-not-allowed"
                                 : "bg-sky-700 hover:bg-sky-600 text-gray-100"
                             }`}
-                          title="Approve document"
                         >
-                          ✓
+                            {isThisApproving ? "Approving..." : "Approve"}
                         </button>
-                      </td>
+                        </td>
                     </tr>
-                  );
+                    );
                 })}
-              </tbody>
+                </tbody>
             </table>
-          </div>
+            </div>
         )}
-      </div>
+        </div>
 
-      <button
+        <button
         onClick={handleBack}
         className="mt-1 h-8 px-10 bg-neutral-700 hover:bg-neutral-600 rounded-md text-gray-200 hover:text-gray-300 text-sm cursor-pointer"
-      >
+        >
         Back to Documents
-      </button>
+        </button>
     </div>
-  );
+    );
+
+
 }
 
 export default ApproveDocuments;
