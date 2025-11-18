@@ -3,6 +3,12 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
 
+type Review = {
+    reviewer_id: string | null;
+    comment?: string | null;
+    decided_at?: number | null;
+}
+
 type Document = {
   id?: string;
   _id?: string;
@@ -10,11 +16,10 @@ type Document = {
   owner_id?: string;
   status?: string;
   description?: string;
-  review?: string;
+  review?: Review | null;
   created_at?: string;
   updated_at?: string;
 };
-
 function DeleteDocuments() {
   const navigate = useNavigate();
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -314,11 +319,20 @@ function DeleteDocuments() {
                 </p>
               )}
 
-              {selectedDoc.review && (
+              {selectedDoc.review != null && (
                 <p className="mt-2">
-                  <span className="font-semibold text-gray-300">Review:</span>
-                  <br />
-                  <span className="text-gray-300">{selectedDoc.review}</span>
+                  <span className="font-semibold text-gray-300">Reviewed By:</span>
+                    <br />
+                  <span className="text-gray-300">{selectedDoc.review.reviewer_id}</span>
+                    <br />
+                  <span className="font-semibold text-gray-300">Date of Review:</span>
+                    <br />
+                  <span className="text-gray-300">{selectedDoc.review.decided_at}</span>
+                    <br />
+                  <span className="font-semibold text-gray-300">Comments:</span>
+                    <br />
+                  <span className="text-gray-300">{selectedDoc.review.comment}</span>
+                    <br />
                 </p>
               )}
             </div>

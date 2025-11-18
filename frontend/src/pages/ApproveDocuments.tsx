@@ -103,33 +103,33 @@ function ApproveDocuments() {
 
         setApprovingId(docId);
         try {
-        const res = await axios.post(
-            `http://localhost:8000/documents/reviews/${docId}/approve`,
-            {
-            reviewer_id: managerId,
-            comment: "approved",
-            decided_at: new Date().toISOString(),
-            }
-        );
+            const res = await axios.post(
+                `http://localhost:8000/documents/reviews/${docId}/approve`,
+                {
+                    reviewer_id: managerId,
+                    comment: "approved",
+                    decided_at: new Date().toISOString(),
+                }
+            );
 
-        console.log("Approve response:", res.data);
+            console.log("Approve response:", res.data);
 
-        toast.success("Document approved successfully.", {
-            style: { background: "#393939", color: "#FFFFFF" },
-        });
+            toast.success("Document approved successfully.", {
+                style: { background: "#393939", color: "#FFFFFF" },
+            });
 
-        // Remove approved document from list
-        setDocuments((prev) => prev.filter((d) => d.id !== docId && d._id !== docId));
+            // Remove approved document from list
+            setDocuments((prev) => prev.filter((d) => d.id !== docId && d._id !== docId));
         } catch (error: any) {
-        console.error(
-            "Error approving document:",
-            error.response?.data || error.message
-        );
-        toast.error("Failed to approve document.", {
-            style: { background: "#393939", color: "#FFFFFF" },
-        });
+            console.error(
+                "Error approving document:",
+                error.response?.data || error.message
+            );
+            toast.error("Failed to approve document.", {
+                style: { background: "#393939", color: "#FFFFFF" },
+            });
         } finally {
-        setApprovingId(null);
+            setApprovingId(null);
         }
     };
 
