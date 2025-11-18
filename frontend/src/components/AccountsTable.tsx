@@ -20,7 +20,7 @@ function AccountsTable() {
             const res = await axios.get("http://localhost:8000/users", {
             withCredentials: true, // optional now
             });
-            console.log("Fetched users:", res.data.data[0]);
+
 
             const filtered = res.data.data.map((user: any) => ({
                 _id: user._id,
@@ -33,12 +33,6 @@ function AccountsTable() {
             console.error("Error fetching users:", err);
         }
     };
-
-    useEffect(() => {
-    if (accounts) {
-        console.log("Updated accounts state:", accounts);
-    }
-    }, [accounts]);
 
 
   return (

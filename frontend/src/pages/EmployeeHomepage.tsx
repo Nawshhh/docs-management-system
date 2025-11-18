@@ -24,7 +24,7 @@ function EmployeeHomepage() {
             headers: { Authorization: `Bearer ${token}` },
             withCredentials: true,
             });
-            console.log("User info fetched:", res.data.data);
+
             setUser(res.data.data);
             setFirstName(res.data.data.profile.first_name);
         } catch (error: any) {

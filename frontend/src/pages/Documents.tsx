@@ -1,5 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import toast from "react-hot-toast";
 
 
 function Documents() {
@@ -21,6 +23,47 @@ function Documents() {
   const handleDeleteDocuments = () => {
     navigate("/delete-documents");
   }
+
+    useEffect(() => {
+        fetchUserInfo();
+    }, []);
+
+    const fetchUserInfo = async () => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            console.log("No token found — user probably logged out");
+            toast.error("No permission. Managers only.", {
+                style: { background: "#393939", color: "#FFFFFF" },
+            });
+            navigate("/");
+            return;
+        }
+
+        try {
+            const res = await axios.get("http://localhost:8000/auth/me", {
+                headers: { Authorization: `Bearer ${token}` },
+                withCredentials: true,
+            });
+
+             
+
+            // role check using userData
+            if (res.data.data.role !== "MANAGER") {
+                toast.error("Access denied. Managers only.", {
+                style: { background: "#393939", color: "#FFFFFF" },
+                });
+                navigate("/");
+                return;
+            }
+
+        } catch (error: any) {
+            console.error("User info failed:", error.response?.data || error.message);
+            toast.error("Re-authenticate again", {
+                style: { background: "#393939", color: "#FFFFFF" },
+            });
+            navigate("/");
+        }
+    };
 
   return (
     <div className='w-screen h-screen flex flex-col items-center justify-center bg-zinc-900 px-20 md:px-80 sm:px-10'>

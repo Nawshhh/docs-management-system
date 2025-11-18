@@ -26,6 +26,47 @@ function DeleteDocuments() {
 
   const managerId = localStorage.getItem("my_id");
 
+    useEffect(() => {
+        fetchUserInfo();
+    }, []);
+
+    const fetchUserInfo = async () => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            console.log("No token found — user probably logged out");
+            toast.error("No permission. Managers only.", {
+                style: { background: "#393939", color: "#FFFFFF" },
+            });
+            navigate("/");
+            return;
+        }
+
+        try {
+            const res = await axios.get("http://localhost:8000/auth/me", {
+                headers: { Authorization: `Bearer ${token}` },
+                withCredentials: true,
+            });
+
+             
+
+            // role check using userData
+            if (res.data.data.role !== "MANAGER") {
+                toast.error("Access denied. Managers only.", {
+                style: { background: "#393939", color: "#FFFFFF" },
+                });
+                navigate("/");
+                return;
+            }
+
+        } catch (error: any) {
+            console.error("User info failed:", error.response?.data || error.message);
+            toast.error("Re-authenticate again", {
+                style: { background: "#393939", color: "#FFFFFF" },
+            });
+            navigate("/");
+        }
+    };
+
   const handleBack = () => {
     navigate("/documents");
   };
@@ -47,94 +88,92 @@ function DeleteDocuments() {
     setIsModalOpen(false);
   };
 
-// Actual delete operation (API call + state update)
-const performDelete = async (docId: string, toastId: string) => {
-  if (!managerId) {
-    toast.error("Missing user ID for delete.", {
-      style: { background: "#393939", color: "#FFFFFF" },
-    });
-    toast.dismiss(toastId);
-    return;
-  }
+    const performDelete = async (docId: string, toastId: string) => {
+    if (!managerId) {
+        toast.error("Missing user ID for delete.", {
+        style: { background: "#393939", color: "#FFFFFF" },
+        });
+        toast.dismiss(toastId);
+        return;
+    }
 
-  try {
-    setDeletingId(docId);
+    try {
+        setDeletingId(docId);
 
-    await axios.delete(
-      `http://localhost:8000/documents/${docId}/attachments`,
-      {
-        params: {
-          user_id: managerId, // query param expected by your endpoint
-        },
-      }
-    );
-
-    toast.success("Document deleted successfully.", {
-      style: { background: "#393939", color: "#FFFFFF" },
-    });
-
-    setDocuments((prev) =>
-      prev.filter((d) => d.id !== docId && d._id !== docId)
-    );
-  } catch (error: any) {
-    console.error(
-      "Error deleting document:",
-      error.response?.data || error.message
-    );
-    toast.error("Failed to delete document.", {
-      style: { background: "#393939", color: "#FFFFFF" },
-    });
-  } finally {
-    setDeletingId(null);
-    toast.dismiss(toastId);
-  }
-};
-
-// Show confirmation toast
-const handleDeleteClick = (e: React.MouseEvent<HTMLButtonElement>, doc: Document) => {
-    e.stopPropagation(); // prevent opening the modal
-
-    const docId = doc.id || doc._id;
-    if (!docId) return;
-
-    const toastId = toast.custom(
-        (t) => (
-        <div
-            className={`${
-            t.visible ? "animate-enter" : "animate-leave"
-            } max-w-sm w-full bg-zinc-800 text-gray-100 shadow-lg rounded-lg pointer-events-auto flex flex-col p-4`}
-        >
-            <p className="text-sm font-medium mb-2">
-            Delete “{doc.title || "Untitled"}”?
-            </p>
-            <p className="text-xs text-gray-300 mb-3">
-            This action cannot be undone.
-            </p>
-            <div className="flex justify-end gap-2">
-            <button
-                onClick={() => toast.dismiss(toastId)}
-                className="px-3 py-1 rounded-md text-xs bg-neutral-600 hover:bg-neutral-500"
-            >
-                Cancel
-            </button>
-            <button
-                onClick={() => performDelete(docId, toastId)}
-                className="px-3 py-1 rounded-md text-xs bg-red-600 hover:bg-red-500"
-            >
-                Delete
-            </button>
-            </div>
-        </div>
-        ),
+        await axios.delete(
+        `http://localhost:8000/documents/${docId}/attachments`,
         {
-        duration: 6000,
-        position: "top-center",
+            params: {
+            user_id: managerId, // query param expected by your endpoint
+            },
         }
-    );
-};
+        );
+
+        toast.success("Document deleted successfully.", {
+        style: { background: "#393939", color: "#FFFFFF" },
+        });
+
+        setDocuments((prev) =>
+        prev.filter((d) => d.id !== docId && d._id !== docId)
+        );
+    } catch (error: any) {
+        console.error(
+        "Error deleting document:",
+        error.response?.data || error.message
+        );
+        toast.error("Failed to delete document.", {
+        style: { background: "#393939", color: "#FFFFFF" },
+        });
+    } finally {
+        setDeletingId(null);
+        toast.dismiss(toastId);
+    }
+    };
+
+    // confirmation toast
+    const handleDeleteClick = (e: React.MouseEvent<HTMLButtonElement>, doc: Document) => {
+        e.stopPropagation(); // prevent opening the modal
+
+        const docId = doc.id || doc._id;
+        if (!docId) return;
+
+        const toastId = toast.custom(
+            (t) => (
+            <div
+                className={`${
+                t.visible ? "animate-enter" : "animate-leave"
+                } max-w-sm w-full bg-zinc-800 text-gray-100 shadow-lg rounded-lg pointer-events-auto flex flex-col p-4`}
+            >
+                <p className="text-sm font-medium mb-2">
+                Delete “{doc.title || "Untitled"}”?
+                </p>
+                <p className="text-xs text-gray-300 mb-3">
+                This action cannot be undone.
+                </p>
+                <div className="flex justify-end gap-2">
+                <button
+                    onClick={() => toast.dismiss(toastId)}
+                    className="px-3 py-1 rounded-md text-xs bg-neutral-600 hover:bg-neutral-500"
+                >
+                    Cancel
+                </button>
+                <button
+                    onClick={() => performDelete(docId, toastId)}
+                    className="px-3 py-1 rounded-md text-xs bg-red-600 hover:bg-red-500"
+                >
+                    Delete
+                </button>
+                </div>
+            </div>
+            ),
+            {
+            duration: 3000,
+            position: "top-center",
+            }
+        );
+    };
 
   useEffect(() => {
-    console.log("Manager ID from localStorage:", managerId);
     const fetchDocuments = async () => {
       try {
         const res = await axios.post(

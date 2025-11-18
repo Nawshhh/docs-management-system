@@ -47,9 +47,9 @@ function ManagerHomepage() {
       });
 
       const userData: User = res.data.data;
-      console.log("User info fetched:", userData.id);
+       
 
-        // 👇 store my_id in localStorage
+        // store my_id in localStorage
         if (userData?.id) {
         localStorage.setItem("my_id", userData.id);
         }

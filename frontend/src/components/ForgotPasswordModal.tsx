@@ -37,7 +37,6 @@ function ForgotPasswordModal() {
             const res = await axios.post("http://localhost:8000/users/find-by-email",
                 { email }
             );
-            console.log("Find email message:", res.data);
             if (!res.data.ok){
                 setFoundEmail(false);
                 if (res.data.error == "User not found") {

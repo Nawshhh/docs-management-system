@@ -36,7 +36,7 @@ function AdminHomepage() {
       });
 
       const userData = res.data.data;
-      console.log("User info fetched:", userData.id);
+       
 
       // role check: only allow ADMIN
       if (userData.role !== "ADMIN") {

@@ -12,85 +12,126 @@ type Document = {
 };
 
 function ApproveDocuments() {
-  const navigate = useNavigate();
-  const managerId = localStorage.getItem("my_id");
+    const navigate = useNavigate();
+    const managerId = localStorage.getItem("my_id");
 
-  const [documents, setDocuments] = useState<Document[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [approvingId, setApprovingId] = useState<string | null>(null);
+    const [documents, setDocuments] = useState<Document[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [approvingId, setApprovingId] = useState<string | null>(null);
 
-  const handleBack = () => {
-    navigate("/documents");
-  };
+    useEffect(() => {
+        fetchUserInfo();
+    }, []);
 
-  useEffect(() => {
-    const fetchDocuments = async () => {
-      if (!managerId) {
-        toast.error("No manager ID found.", {
-          style: { background: "#393939", color: "#FFFFFF" },
-        });
-        setLoading(false);
-        return;
-      }
+    const fetchUserInfo = async () => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            console.log("No token found — user probably logged out");
+            toast.error("No permission. Managers only.", {
+                style: { background: "#393939", color: "#FFFFFF" },
+            });
+            navigate("/");
+            return;
+        }
 
-      try {
-        const res = await axios.post(
-        "http://localhost:8000/documents/view-docs/pending",
-        { manager_id: managerId }
-        );
+        try {
+            const res = await axios.get("http://localhost:8000/auth/me", {
+                headers: { Authorization: `Bearer ${token}` },
+                withCredentials: true,
+            });
 
-        const items: Document[] = res.data?.data || [];
-        setDocuments(items);
-      } catch (error: any) {
-        console.error(
-          "Error fetching documents:",
-          error.response?.data || error.message
-        );
-        toast.error("Failed to load documents.", {
-          style: { background: "#393939", color: "#FFFFFF" },
-        });
-      } finally {
-        setLoading(false);
-      }
+             
+
+            // role check using userData
+            if (res.data.data.role !== "MANAGER") {
+                toast.error("Access denied. Managers only.", {
+                style: { background: "#393939", color: "#FFFFFF" },
+                });
+                navigate("/");
+                return;
+            }
+
+        } catch (error: any) {
+            console.error("User info failed:", error.response?.data || error.message);
+            toast.error("Re-authenticate again", {
+                style: { background: "#393939", color: "#FFFFFF" },
+            });
+            navigate("/");
+        }
     };
 
-    fetchDocuments();
-  }, [managerId]);
+    const handleBack = () => {
+        navigate("/documents");
+    };
 
-  const handleApprove = async (docId?: string) => {
-    if (!docId || !managerId) return;
-
-    setApprovingId(docId);
-    try {
-      const res = await axios.post(
-        `http://localhost:8000/documents/reviews/${docId}/approve`,
-        {
-          reviewer_id: managerId,
-          comment: "approved",
-          decided_at: new Date().toISOString(),
+    useEffect(() => {
+        const fetchDocuments = async () => {
+        if (!managerId) {
+            toast.error("No manager ID found.", {
+            style: { background: "#393939", color: "#FFFFFF" },
+            });
+            setLoading(false);
+            return;
         }
-      );
 
-      console.log("Approve response:", res.data);
+        try {
+            const res = await axios.post(
+            "http://localhost:8000/documents/view-docs/pending",
+            { manager_id: managerId }
+            );
 
-      toast.success("Document approved successfully.", {
-        style: { background: "#393939", color: "#FFFFFF" },
-      });
+            const items: Document[] = res.data?.data || [];
+            setDocuments(items);
+        } catch (error: any) {
+            console.error(
+            "Error fetching documents:",
+            error.response?.data || error.message
+            );
+            toast.error("Failed to load documents.", {
+            style: { background: "#393939", color: "#FFFFFF" },
+            });
+        } finally {
+            setLoading(false);
+        }
+        };
 
-      // Remove approved document from list
-      setDocuments((prev) => prev.filter((d) => d.id !== docId && d._id !== docId));
-    } catch (error: any) {
-      console.error(
-        "Error approving document:",
-        error.response?.data || error.message
-      );
-      toast.error("Failed to approve document.", {
-        style: { background: "#393939", color: "#FFFFFF" },
-      });
-    } finally {
-      setApprovingId(null);
-    }
-  };
+        fetchDocuments();
+    }, [managerId]);
+
+    const handleApprove = async (docId?: string) => {
+        if (!docId || !managerId) return;
+
+        setApprovingId(docId);
+        try {
+        const res = await axios.post(
+            `http://localhost:8000/documents/reviews/${docId}/approve`,
+            {
+            reviewer_id: managerId,
+            comment: "approved",
+            decided_at: new Date().toISOString(),
+            }
+        );
+
+        console.log("Approve response:", res.data);
+
+        toast.success("Document approved successfully.", {
+            style: { background: "#393939", color: "#FFFFFF" },
+        });
+
+        // Remove approved document from list
+        setDocuments((prev) => prev.filter((d) => d.id !== docId && d._id !== docId));
+        } catch (error: any) {
+        console.error(
+            "Error approving document:",
+            error.response?.data || error.message
+        );
+        toast.error("Failed to approve document.", {
+            style: { background: "#393939", color: "#FFFFFF" },
+        });
+        } finally {
+        setApprovingId(null);
+        }
+    };
 
     return (
     <div className="w-screen h-screen flex flex-col items-center justify-center bg-zinc-900 px-20 md:px-80 sm:px-10">

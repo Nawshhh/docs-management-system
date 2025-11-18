@@ -1,6 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import axios from 'axios';
 import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 
 interface Account {
     _id: string,
@@ -16,6 +17,47 @@ function ViewEmployeePage() {
     const { my_id } = (location.state || {}) as { my_id?: string };
     const [accounts, setAccounts] = useState<Account[] | null>(null);
 
+    useEffect(() => {
+        fetchUserInfo();
+    }, []);
+
+    const fetchUserInfo = async () => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            console.log("No token found — user probably logged out");
+            toast.error("No permission. Managers only.", {
+                style: { background: "#393939", color: "#FFFFFF" },
+            });
+            navigate("/");
+            return;
+        }
+
+        try {
+            const res = await axios.get("http://localhost:8000/auth/me", {
+                headers: { Authorization: `Bearer ${token}` },
+                withCredentials: true,
+            });
+
+             
+
+            // role check using userData
+            if (res.data.data.role !== "MANAGER") {
+                toast.error("Access denied. Managers only.", {
+                style: { background: "#393939", color: "#FFFFFF" },
+                });
+                navigate("/");
+                return;
+            }
+
+        } catch (error: any) {
+            console.error("User info failed:", error.response?.data || error.message);
+            toast.error("Re-authenticate again", {
+                style: { background: "#393939", color: "#FFFFFF" },
+            });
+            navigate("/");
+        }
+    };
+
 
     const handleHome = () => {
         navigate("/manager-homepage");
@@ -26,7 +68,7 @@ function ViewEmployeePage() {
     },[]);
 
     const fetchEmployeeData = async (managerId: string) => {
-    console.log("Fetching employee data for ID:", managerId);
+
     try {
         const response = await axios.get(
         `http://localhost:8000/users/manager/${managerId}/employees`,

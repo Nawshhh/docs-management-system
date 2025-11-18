@@ -47,7 +47,6 @@ function ViewDocuments() {
   };
 
   useEffect(() => {
-    console.log("Manager ID from localStorage:", managerId);
     const fetchDocuments = async () => {
       try {
         const res = await axios.post(
