@@ -75,7 +75,6 @@ class Attachment(BaseModel):
 
 class ReviewInfo(BaseModel):
     reviewer_id: str | None = None
-    decision: str | None = None  # "APPROVED" | "REJECTED" | None
     comment: str | None = None
     decided_at: datetime | None = None
 

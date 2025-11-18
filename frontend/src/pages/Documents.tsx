@@ -1,28 +1,25 @@
 import { useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 
 function Documents() {
 
   const navigate = useNavigate();
 
-  const my_id = localStorage.getItem("my_id");
-
-  useEffect(() => {
-    console.log("Documents Page loaded with my_id:", my_id);
-  }, [my_id]);
-
   const handleHome = () => {
-    navigate("/manager-homepage", { state: { my_id: my_id } });
+    navigate("/manager-homepage");
   }
 
-  // // soon to implement
-  // const handleApproveDocuments = () => {
-  //   navigate("");
-  // }
+  const handleApproveDocuments = () => {
+    navigate("/approve-documents");
+  }
 
   const handleViewDocuments = () => {
     navigate("/view-documents");
+  }
+
+  const handleDeleteDocuments = () => {
+    navigate("/delete-documents");
   }
 
   return (
@@ -35,8 +32,14 @@ function Documents() {
                 View Documents
             </button>
             <button  
+                onClick={handleApproveDocuments}
                 className='flex items-center justify-center bg-slate-700 hover:bg-slate-600 rounded-md h-20 cursor-pointer'>
                 Approve Documents
+            </button>
+            <button  
+                onClick={handleDeleteDocuments}
+                className='flex items-center justify-center bg-slate-700 hover:bg-slate-600 rounded-md h-20 cursor-pointer'>
+                Delete Documents
             </button>
         </div>
         <button 

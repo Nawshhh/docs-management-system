@@ -9,25 +9,30 @@ from .utils import to_obj_id, from_obj_id
 
 COLL = "documents"
 
-def _doc_to_out(doc) -> DocumentOut:
+def _doc_to_out(d: dict) -> DocumentOut:
+    review_doc = d.get("review")
+
+    review = None
+    if review_doc:
+        review = {
+            "reviewer_id": str(review_doc.get("reviewer_id")) if review_doc.get("reviewer_id") else None,
+            "decision": review_doc.get("decision"),
+            "comment": review_doc.get("comment"),
+            "decided_at": review_doc.get("decided_at"),
+        }
+
     return DocumentOut(
-        id=str(doc["_id"]),
-        owner_id=str(doc["owner_id"]),
-        title=doc["title"],
-        description=doc.get("description"),
-        status=DocStatus(doc.get("status", DocStatus.PENDING_REVIEW)),
-        attachments=[
-            Attachment(
-                file_id=str(att["file_id"]),
-                filename=att["filename"],
-                size=att["size"],
-                content_type=att["content_type"],
-            ) for att in doc.get("attachments", [])
-        ],
-        review=ReviewInfo(**doc["review"]) if doc.get("review") else None,
-        created_at=doc.get("created_at"),
-        updated_at=doc.get("updated_at"),
+        id=str(d["_id"]),
+        owner_id=str(d["owner_id"]),
+        title=d.get("title"),
+        description=d.get("description"),
+        status=d.get("status"),
+        attachments=d.get("attachments", []),
+        review=review,
+        created_at=d.get("created_at"),
+        updated_at=d.get("updated_at"),
     )
+
 
 async def ensure_indexes(db: AsyncIOMotorDatabase):
     await db[COLL].create_index([("owner_id", 1), ("status", 1)])
@@ -57,8 +62,33 @@ async def get_document(db: AsyncIOMotorDatabase, doc_id: str) -> Optional[Docume
     doc = await db[COLL].find_one({"owner_id": to_obj_id(doc_id)})
     return _doc_to_out(doc) if doc else None
 
-async def get_documents(db: AsyncIOMotorDatabase, owner_id: str) -> list[DocumentOut]:
-    cursor = db[COLL].find({"owner_id": to_obj_id(owner_id)})
+async def get_documents(
+    db: AsyncIOMotorDatabase,
+    owner_id: str,
+    status: str | None = None
+) -> list[DocumentOut]:
+
+    query = {"owner_id": to_obj_id(owner_id)}
+
+    # If a status filter is provided, add it to the query
+    if status:
+        query["status"] = status
+
+    cursor = db[COLL].find(query)
+
+    docs: list[DocumentOut] = []
+    async for d in cursor:
+        try:
+            docs.append(_doc_to_out(d))
+        except Exception as e:
+            # optional: skip malformed docs instead of breaking everything
+            print("Skipping invalid document:", d, "Error:", e)
+
+    return docs
+
+
+async def get_documents_status(db: AsyncIOMotorDatabase, owner_id: str, status: str) -> list[DocumentOut]:
+    cursor = db[COLL].find({"owner_id": to_obj_id(owner_id), "status": status})
 
     docs = []
     async for d in cursor:

@@ -1,12 +1,16 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
 
 type Document = {
   id?: string;
-  title?: string;          // adjust if your backend uses `title` or `document_name`
+  _id?: string;
+  title?: string;
+  owner_id?: string;
   status?: string;
+  description?: string;
+  review?: string | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -15,6 +19,9 @@ function ViewDocuments() {
   const navigate = useNavigate();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const managerId = localStorage.getItem("my_id");
 
@@ -25,39 +32,46 @@ function ViewDocuments() {
   const formatDate = (value?: string) => {
     if (!value) return "-";
     const d = new Date(value);
-    if (Number.isNaN(d.getTime())) return value; // fallback if not a valid date
+    if (Number.isNaN(d.getTime())) return value;
     return d.toLocaleString("en-PH", { timeZone: "Asia/Manila" });
   };
 
-    useEffect(() => {
+  const openModal = (doc: Document) => {
+    setSelectedDoc(doc);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setSelectedDoc(null);
+    setIsModalOpen(false);
+  };
+
+  useEffect(() => {
+    console.log("Manager ID from localStorage:", managerId);
     const fetchDocuments = async () => {
-        try {
-            const res = await axios.post( "http://localhost:8000/documents/reviews/pending/",
-                {manager_id: managerId}
-            );
+      try {
+        const res = await axios.post(
+        "http://localhost:8000/documents/view-docs",
+        { manager_id: managerId }
+        );
 
-            const raw_docs = res.data.data[0]
-            console.log("Documents fetched:", raw_docs);
-
-            const items: Document[] = raw_docs || [];
-            setDocuments(items);
-        } catch (error: any) {
-            console.error(
-                "Error fetching documents:",
-                error.response?.data || error.message
-            );
+        const items: Document[] = res.data?.data || [];
+        setDocuments(items);
+      } catch (error: any) {
+        console.error(
+          "Error fetching documents:",
+          error.response?.data || error.message
+        );
         toast.error("Failed to load documents.", {
-            style: { background: "#393939", color: "#FFFFFF" },
+          style: { background: "#393939", color: "#FFFFFF" },
         });
-        } finally {
+      } finally {
         setLoading(false);
-        }
+      }
     };
 
     fetchDocuments();
-    }, [managerId]);
-
-
+  }, [managerId]);
 
   return (
     <div className="w-screen h-screen flex flex-col items-center justify-center bg-zinc-900 px-20 md:px-80 sm:px-10">
@@ -69,40 +83,32 @@ function ViewDocuments() {
         {loading ? (
           <div className="text-gray-200 text-sm">Loading documents...</div>
         ) : documents.length === 0 ? (
-          <div className="text-gray-400 text-sm">
-            No documents found.
-          </div>
+          <div className="text-gray-400 text-sm">No documents found.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-left text-sm text-gray-200">
               <thead>
                 <tr className="border-b border-zinc-700">
                   <th className="py-2 px-3">Document Name</th>
-                  <th className="py-2 px-3">Created At</th>
-                  <th className="py-2 px-3">Updated At</th>
+                  <th className="py-2 px-3">Owner</th>
                   <th className="py-2 px-3">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {documents.map((doc, idx) => {
-                  const key = doc.id || doc.id || idx;
+                  const key = doc.id || doc._id || idx;
                   const docName = doc.title || "Untitled";
+                  const docOwner = doc.owner_id || "—";
 
                   return (
                     <tr
                       key={key}
-                      className="border-b border-zinc-700 hover:bg-zinc-700/40"
+                      onClick={() => openModal(doc)}
+                      className="border-b border-zinc-700 hover:bg-zinc-700/40 cursor-pointer"
                     >
                       <td className="py-2 px-3">{docName}</td>
-                      <td className="py-2 px-3">
-                        {formatDate(doc.created_at)}
-                      </td>
-                      <td className="py-2 px-3">
-                        {formatDate(doc.updated_at)}
-                      </td>
-                      <td className="py-2 px-3">
-                        {doc.status || "—"}
-                      </td>
+                      <td className="py-2 px-3">{docOwner}</td>
+                      <td className="py-2 px-3">{doc.status || "—"}</td>
                     </tr>
                   );
                 })}
@@ -116,8 +122,75 @@ function ViewDocuments() {
         onClick={handleBack}
         className="mt-1 h-8 px-10 bg-neutral-700 hover:bg-neutral-600 rounded-md text-gray-200 hover:text-gray-300 text-sm cursor-pointer"
       >
-        Back to Home
+        Back to Documents
       </button>
+
+      {/* Modal for document details */}
+      {isModalOpen && selectedDoc && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-zinc-800 rounded-lg shadow-xl w-full max-w-lg p-6 relative">
+            {/* Close button */}
+            <button
+              onClick={closeModal}
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-200 text-xl leading-none"
+            >
+              ×
+            </button>
+
+            <h2 className="text-xl font-semibold text-gray-100 mb-4">
+              {selectedDoc.title || "Untitled Document"}
+            </h2>
+
+            <div className="space-y-2 text-sm text-gray-200">
+              <p>
+                <span className="font-semibold text-gray-300">Owner ID:</span>{" "}
+                {selectedDoc.owner_id || "—"}
+              </p>
+              <p>
+                <span className="font-semibold text-gray-300">Status:</span>{" "}
+                {selectedDoc.status || "—"}
+              </p>
+              <p>
+                <span className="font-semibold text-gray-300">Created At:</span>{" "}
+                {formatDate(selectedDoc.created_at)}
+              </p>
+              <p>
+                <span className="font-semibold text-gray-300">Updated At:</span>{" "}
+                {formatDate(selectedDoc.updated_at)}
+              </p>
+
+              {selectedDoc.description && (
+                <p className="mt-3">
+                  <span className="font-semibold text-gray-300">
+                    Description:
+                  </span>
+                  <br />
+                  <span className="text-gray-300">
+                    {selectedDoc.description}
+                  </span>
+                </p>
+              )}
+
+              {selectedDoc.review && (
+                <p className="mt-2">
+                  <span className="font-semibold text-gray-300">Review:</span>
+                  <br />
+                  <span className="text-gray-300">{selectedDoc.review}</span>
+                </p>
+              )}
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={closeModal}
+                className="px-4 py-2 rounded-md bg-neutral-700 hover:bg-neutral-600 text-gray-100 text-sm"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

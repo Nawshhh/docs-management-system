@@ -219,18 +219,50 @@ async def add_attachment(
 
 # ---------- Review queue & decisions (Manager-only by body, no auth) ----------
 
-@router.post("/reviews/pending/", response_model=ApiEnvelope)
-async def list_pending_in_scope(
+@router.post("/view-docs", response_model=ApiEnvelope)
+async def list_docs_in_scope(
     body: PendingScopeBody,
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     """
-    Public: Given a manager_id in the body, return pending documents for
-    all EMPLOYEEs whose manager_id == body.manager_id.
+    Given a manager_id in the body, return ALL documents
+    (any status) for employees whose manager_id == body.manager_id.
     """
     try:
         manager_id = body.manager_id
-        manager_obj_id = ObjectId(manager_id)  # if manager_id stored as ObjectId
+        manager_obj_id = ObjectId(manager_id)
+
+        cursor = db["users"].find(
+            {
+                "role": Role.EMPLOYEE.value,
+                "manager_id": manager_obj_id,
+            },
+            {"_id": 1},
+        )
+
+        emp_ids: list[str] = [str(d["_id"]) async for d in cursor]
+
+        if not emp_ids:
+            return ok([])
+
+        all_docs: list[DocumentOut] = []
+        for emp_id in emp_ids:
+            docs_for_emp = await docs_repo.get_documents(db, emp_id)  # list
+            all_docs.extend(docs_for_emp) 
+
+        return ok(all_docs)
+    except Exception as e:
+        print("Error listing docs:", e)
+        return fail("Could not list documents")
+
+@router.post("/view-docs/pending", response_model=ApiEnvelope)
+async def list_pending_in_scope(
+    body: PendingScopeBody,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    try:
+        manager_id = body.manager_id
+        manager_obj_id = ObjectId(manager_id) 
 
         cursor = db["users"].find(
             {
@@ -242,15 +274,13 @@ async def list_pending_in_scope(
 
         emp_ids: list[str] = [str(d["_id"]) async for d in cursor]
         print("Employee IDs under manager:", emp_ids)
-
         if not emp_ids:
             return ok([])
 
         all_docs = []
         for emp_id in emp_ids:
-            docs_for_emp = await docs_repo.get_documents(db, emp_id)  # your repo must return list
-            all_docs.append(docs_for_emp)
-            print("Employee ID:", emp_id)
+            docs_for_emp = await docs_repo.get_documents_status(db, emp_id, "PENDING_REVIEW") 
+            all_docs.extend(docs_for_emp)
 
         return ok(all_docs)
     except Exception as e:
