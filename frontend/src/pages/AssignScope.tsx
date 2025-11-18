@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import LogoutButton from "../components/LogoutButton"; // adjust path as needed
 
 type Role = "ADMIN" | "MANAGER" | "EMPLOYEE";
 
@@ -57,8 +56,6 @@ function AssignScope() {
           withCredentials: true,
         }),
         axios.get("http://localhost:8000/users/get-employees", {
-          // assumes backend supports ?unassigned=true or filters only unassigned
-          params: { unassigned: true },
           headers,
           withCredentials: true,
         }),

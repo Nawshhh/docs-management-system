@@ -47,7 +47,12 @@ function ManagerHomepage() {
       });
 
       const userData: User = res.data.data;
-      console.log("User info fetched:", userData);
+      console.log("User info fetched:", userData.id);
+
+        // 👇 store my_id in localStorage
+        if (userData?.id) {
+        localStorage.setItem("my_id", userData.id);
+        }
 
       // role check using userData
       if (userData.role !== "MANAGER") {
@@ -62,7 +67,10 @@ function ManagerHomepage() {
       setFirstName(userData.profile?.first_name || "Manager");
     } catch (error: any) {
       console.error("User info failed:", error.response?.data || error.message);
-      navigate("/");
+        toast.error("Re-authenticate again", {
+          style: { background: "#393939", color: "#FFFFFF" },
+        });
+        navigate("/");
     } finally {
       setLoading(false);
     }
@@ -70,7 +78,7 @@ function ManagerHomepage() {
 
     const handleButtonClick = (dest: number) => {
         if (dest === 1) navigate("/view-scope", { state: { my_id: user!.id } });
-        if (dest === 2) navigate("/documents");
+        if (dest === 2) navigate("/documents", { state: { my_id: user!.id } });
     };
 
   if (loading) {

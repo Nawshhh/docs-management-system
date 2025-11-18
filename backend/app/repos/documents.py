@@ -15,7 +15,7 @@ def _doc_to_out(doc) -> DocumentOut:
         owner_id=str(doc["owner_id"]),
         title=doc["title"],
         description=doc.get("description"),
-        status=DocStatus(doc.get("status", DocStatus.DRAFT)),
+        status=DocStatus(doc.get("status", DocStatus.PENDING_REVIEW)),
         attachments=[
             Attachment(
                 file_id=str(att["file_id"]),
@@ -40,7 +40,7 @@ async def create_document(db: AsyncIOMotorDatabase, owner_id: str, payload: Docu
         "owner_id": to_obj_id(owner_id),
         "title": payload.title,
         "description": payload.description,
-        "status": DocStatus.DRAFT.value,
+        "status": DocStatus.PENDING_REVIEW.value,
         "attachments": [
             {"file_id": to_obj_id(a.file_id), "filename": a.filename, "size": a.size, "content_type": a.content_type}
             for a in payload.attachments
@@ -54,8 +54,17 @@ async def create_document(db: AsyncIOMotorDatabase, owner_id: str, payload: Docu
     return _doc_to_out(doc)
 
 async def get_document(db: AsyncIOMotorDatabase, doc_id: str) -> Optional[DocumentOut]:
-    doc = await db[COLL].find_one({"_id": to_obj_id(doc_id)})
+    doc = await db[COLL].find_one({"owner_id": to_obj_id(doc_id)})
     return _doc_to_out(doc) if doc else None
+
+async def get_documents(db: AsyncIOMotorDatabase, owner_id: str) -> list[DocumentOut]:
+    cursor = db[COLL].find({"owner_id": to_obj_id(owner_id)})
+
+    docs = []
+    async for d in cursor:
+        docs.append(_doc_to_out(d))
+
+    return docs
 
 async def list_my_documents(db: AsyncIOMotorDatabase, owner_id: str) -> list[DocumentOut]:
     cursor = db[COLL].find({"owner_id": to_obj_id(owner_id)}).sort("created_at", -1)
@@ -70,7 +79,7 @@ async def update_draft(db: AsyncIOMotorDatabase, doc_id: str, owner_id: str, tit
         update["$set"]["description"] = description
 
     doc = await db[COLL].find_one_and_update(
-        {"_id": to_obj_id(doc_id), "owner_id": to_obj_id(owner_id), "status": DocStatus.DRAFT.value},
+        {"_id": to_obj_id(doc_id), "owner_id": to_obj_id(owner_id), "status": DocStatus.PENDING_REVIEW.value},
         update,
         return_document=True,
     )
@@ -78,7 +87,7 @@ async def update_draft(db: AsyncIOMotorDatabase, doc_id: str, owner_id: str, tit
 
 async def submit_for_review(db: AsyncIOMotorDatabase, doc_id: str, owner_id: str) -> bool:
     res = await db[COLL].update_one(
-        {"_id": to_obj_id(doc_id), "owner_id": to_obj_id(owner_id), "status": DocStatus.DRAFT.value},
+        {"_id": to_obj_id(doc_id), "owner_id": to_obj_id(owner_id), "status": DocStatus.PENDING_REVIEW.value},
         {"$set": {"status": DocStatus.PENDING_REVIEW.value, "updated_at": datetime.utcnow()}}
     )
     return res.modified_count == 1
@@ -112,7 +121,7 @@ async def add_attachment(db: AsyncIOMotorDatabase, doc_id: str, owner_id: str, f
     # Only while DRAFT
     now = datetime.utcnow()
     doc = await db[COLL].find_one_and_update(
-        {"_id": to_obj_id(doc_id), "owner_id": to_obj_id(owner_id), "status": DocStatus.DRAFT.value},
+        {"_id": to_obj_id(doc_id), "owner_id": to_obj_id(owner_id), "status": DocStatus.PENDING_REVIEW.value},
         {"$push": {"attachments": {"file_id": to_obj_id(file_id), "filename": filename, "size": size, "content_type": content_type}},
          "$set": {"updated_at": now}},
         return_document=True
@@ -121,5 +130,9 @@ async def add_attachment(db: AsyncIOMotorDatabase, doc_id: str, owner_id: str, f
 
 
 async def delete_document(db: AsyncIOMotorDatabase, doc_id: str, owner_id: str) -> bool:
-    res = await db[COLL].delete_one({"_id": to_obj_id(doc_id), "owner_id": to_obj_id(owner_id), "status": DocStatus.DRAFT.value})
+    res = await db[COLL].delete_one({"_id": to_obj_id(doc_id), "owner_id": to_obj_id(owner_id), "status": DocStatus.PENDING_REVIEW.value})
     return res.deleted_count == 1
+
+async def list_all_documents(db: AsyncIOMotorDatabase) -> list[DocumentOut]:
+    cursor = db[COLL].find().sort("created_at", -1)
+    return [_doc_to_out(d) async for d in cursor]

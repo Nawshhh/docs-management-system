@@ -11,7 +11,6 @@ class Role(str, Enum):
     EMPLOYEE = "EMPLOYEE"
 
 class DocStatus(str, Enum):
-    DRAFT = "DRAFT"
     PENDING_REVIEW = "PENDING_REVIEW"
     APPROVED = "APPROVED"
     REJECTED = "REJECTED"
@@ -90,14 +89,14 @@ class DocumentCreate(DocumentBase):
 class DocumentOut(DocumentBase, TsMixin):
     id: str
     owner_id: str
-    status: DocStatus = DocStatus.DRAFT
+    status: DocStatus = DocStatus.PENDING_REVIEW
     attachments: list[Attachment] = []
     review: ReviewInfo | None = None
 
 class DocumentDB(DocumentBase, TsMixin):
     id: str | None = None
     owner_id: str
-    status: DocStatus = DocStatus.DRAFT
+    status: DocStatus = DocStatus.PENDING_REVIEW
     attachments: list[Attachment] = []
     review: ReviewInfo | None = None
 

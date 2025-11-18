@@ -16,6 +16,7 @@ import Documents from './pages/Documents';
 import ForgotPassword from './pages/ForgotPassword';
 import ViewEmployeePage from './pages/ViewEmployeePage';
 import AssignScope from './pages/AssignScope';
+import ViewDocuments from './pages/ViewDocuments';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -33,6 +34,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/forgot-password" element={<ForgotPassword/>}></Route>
         <Route path="/view-scope" element={<ViewEmployeePage/>}></Route>
         <Route path="/assign-scope" element={<AssignScope/>}></Route>
+        <Route path="/view-documents" element={<ViewDocuments/>}></Route>
       </Routes>
       <Toaster position="bottom-right" reverseOrder={true}/>
     </BrowserRouter>
