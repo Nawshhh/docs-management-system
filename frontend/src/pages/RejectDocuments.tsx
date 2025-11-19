@@ -192,7 +192,7 @@ function RejectDocuments() {
     const fetchDocuments = async () => {
       try {
         const res = await axios.post(
-          "http://localhost:8000/documents/view-docs",
+          "http://localhost:8000/documents/view-docs/pending",
           { manager_id: managerId }
         );
 
