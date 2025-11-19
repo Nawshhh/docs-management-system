@@ -24,6 +24,10 @@ function Documents() {
     navigate("/delete-documents");
   }
 
+  const handleRejectDocuments = () => {
+    navigate("/reject-documents");
+  }
+
     useEffect(() => {
         fetchUserInfo();
     }, []);
@@ -68,7 +72,7 @@ function Documents() {
   return (
     <div className='w-screen h-screen flex flex-col items-center justify-center bg-zinc-900 px-20 md:px-80 sm:px-10'>
         <p className='font-semibold text-3xl text-gray-200 mb-10'>Documents Page</p>
-        <div className='grid grid-cols-3 gap-6 w-full my-10 text-gray-200 text-xl font-semibold'>
+        <div className='grid grid-cols-2 gap-6 w-full my-10 text-gray-200 text-xl font-semibold'>
             <button 
                 onClick={handleViewDocuments}
                 className='flex items-center justify-center bg-slate-700 hover:bg-slate-600 rounded-md h-20 cursor-pointer'>
@@ -80,10 +84,16 @@ function Documents() {
                 Approve Documents
             </button>
             <button  
+                onClick={handleRejectDocuments}
+                className='flex items-center justify-center bg-slate-700 hover:bg-slate-600 rounded-md h-20 cursor-pointer'>
+                Reject Documents
+            </button>            
+            <button  
                 onClick={handleDeleteDocuments}
                 className='flex items-center justify-center bg-slate-700 hover:bg-slate-600 rounded-md h-20 cursor-pointer'>
                 Delete Documents
             </button>
+
         </div>
         <button 
             onClick={handleHome}

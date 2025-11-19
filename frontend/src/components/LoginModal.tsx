@@ -57,6 +57,8 @@ function LoginModal() {
         } else if (data.user.role === "MANAGER") {
           navigate("/manager-homepage");
           return;
+        } else {
+          navigate("/employee-homepage");
         }
       } else {
         console.error("No access token returned:", response.data);
