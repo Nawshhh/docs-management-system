@@ -78,6 +78,57 @@ function ViewDocuments() {
     fetchDocuments();
   }, [managerId]);
 
+    useEffect(() => {
+        fetchUserInfo();
+    }, []);
+
+    const fetchUserInfo = async () => {
+        try {
+        const res = await axios.get("http://localhost:8000/auth/me", {
+            withCredentials: true,
+        });
+
+        console.log("Fetched user data:", res.data);
+
+        const { ok, data, error } = res.data;
+
+        if (!ok || !data) {
+            toast.error(error || "Unable to verify permissions.", {
+            style: {
+                background: "#393939",
+                color: "#FFFFFF",
+            },
+            });
+            navigate("/");
+            return;
+        }
+
+        const userData = data;
+
+        if (userData.role !== "MANAGER") {
+            toast.error("Access denied. Managers only.", {
+            style: {
+                background: "#393939",
+                color: "#FFFFFF",
+            },
+            });
+            navigate("/");
+            return;
+        }
+
+        } catch (error: any) {
+        console.error("User info failed:", error.response?.data || error.message);
+
+        toast.error("Unable to verify permissions.", {
+            style: {
+            background: "#393939",
+            color: "#FFFFFF",
+            },
+        });
+        navigate("/");
+        }
+    };
+
   return (
     <div className="w-screen h-screen flex flex-col items-center justify-center bg-zinc-900 px-20 md:px-80 sm:px-10">
       <div className="text-gray-200 text-3xl font-bold mb-6">

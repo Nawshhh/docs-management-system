@@ -30,34 +30,34 @@ function ManagerHomepage() {
   }, []);
 
   const fetchUserInfo = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      console.log("No token found — user probably logged out");
-      toast.error("No permission. Managers only.", {
-        style: { background: "#393939", color: "#FFFFFF" },
-      });
-      navigate("/");
-      return;
-    }
-
     try {
       const res = await axios.get("http://localhost:8000/auth/me", {
-        headers: { Authorization: `Bearer ${token}` },
         withCredentials: true,
       });
 
-      const userData: User = res.data.data;
-       
+      console.log("Fetched user data:", res.data);
 
-        // store my_id in localStorage
-        if (userData?.id) {
-        localStorage.setItem("my_id", userData.id);
-        }
+      const { ok, data, error } = res.data;
 
-      // role check using userData
+      if (!ok || !data) {
+        toast.error(error || "Unable to verify permissions.", {
+          style: {
+            background: "#393939",
+            color: "#FFFFFF",
+          },
+        });
+        navigate("/");
+        return;
+      }
+
+      const userData = data;
+
       if (userData.role !== "MANAGER") {
-        toast.error("Access denied. Managers only.", {
-          style: { background: "#393939", color: "#FFFFFF" },
+        toast.error("Access denied. Manager only.", {
+          style: {
+            background: "#393939",
+            color: "#FFFFFF",
+          },
         });
         navigate("/");
         return;
@@ -67,10 +67,14 @@ function ManagerHomepage() {
       setFirstName(userData.profile?.first_name || "Manager");
     } catch (error: any) {
       console.error("User info failed:", error.response?.data || error.message);
-        toast.error("Re-authenticate again", {
-          style: { background: "#393939", color: "#FFFFFF" },
-        });
-        navigate("/");
+
+      toast.error("Unable to verify permissions.", {
+        style: {
+          background: "#393939",
+          color: "#FFFFFF",
+        },
+      });
+      navigate("/");
     } finally {
       setLoading(false);
     }

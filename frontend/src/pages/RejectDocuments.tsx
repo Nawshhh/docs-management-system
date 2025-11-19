@@ -36,39 +36,49 @@ function RejectDocuments() {
     }, []);
 
     const fetchUserInfo = async () => {
-        const token = localStorage.getItem("token");
-        if (!token) {
-            console.log("No token found — user probably logged out");
-            toast.error("No permission. Managers only.", {
-                style: { background: "#393939", color: "#FFFFFF" },
+        try {
+        const res = await axios.get("http://localhost:8000/auth/me", {
+            withCredentials: true,
+        });
+
+        console.log("Fetched user data:", res.data);
+
+        const { ok, data, error } = res.data;
+
+        if (!ok || !data) {
+            toast.error(error || "Unable to verify permissions.", {
+            style: {
+                background: "#393939",
+                color: "#FFFFFF",
+            },
             });
             navigate("/");
             return;
         }
 
-        try {
-            const res = await axios.get("http://localhost:8000/auth/me", {
-                headers: { Authorization: `Bearer ${token}` },
-                withCredentials: true,
-            });
+        const userData = data;
 
-             
-
-            // role check using userData
-            if (res.data.data.role !== "MANAGER") {
-                toast.error("Access denied. Managers only.", {
-                style: { background: "#393939", color: "#FFFFFF" },
-                });
-                navigate("/");
-                return;
-            }
-
-        } catch (error: any) {
-            console.error("User info failed:", error.response?.data || error.message);
-            toast.error("Re-authenticate again", {
-                style: { background: "#393939", color: "#FFFFFF" },
+        if (userData.role !== "MANAGER") {
+            toast.error("Access denied. Managers only.", {
+            style: {
+                background: "#393939",
+                color: "#FFFFFF",
+            },
             });
             navigate("/");
+            return;
+        }
+
+        } catch (error: any) {
+        console.error("User info failed:", error.response?.data || error.message);
+
+        toast.error("Unable to verify permissions.", {
+            style: {
+            background: "#393939",
+            color: "#FFFFFF",
+            },
+        });
+        navigate("/");
         }
     };
 

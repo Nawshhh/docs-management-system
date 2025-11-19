@@ -17,55 +17,62 @@ function ViewEmployeePage() {
     const { my_id } = (location.state || {}) as { my_id?: string };
     const [accounts, setAccounts] = useState<Account[] | null>(null);
 
-    useEffect(() => {
-        fetchUserInfo();
-    }, []);
-
-    const fetchUserInfo = async () => {
-        const token = localStorage.getItem("token");
-        if (!token) {
-            console.log("No token found — user probably logged out");
-            toast.error("No permission. Managers only.", {
-                style: { background: "#393939", color: "#FFFFFF" },
-            });
-            navigate("/");
-            return;
-        }
-
-        try {
-            const res = await axios.get("http://localhost:8000/auth/me", {
-                headers: { Authorization: `Bearer ${token}` },
-                withCredentials: true,
-            });
-
-             
-
-            // role check using userData
-            if (res.data.data.role !== "MANAGER") {
-                toast.error("Access denied. Managers only.", {
-                style: { background: "#393939", color: "#FFFFFF" },
-                });
-                navigate("/");
-                return;
-            }
-
-        } catch (error: any) {
-            console.error("User info failed:", error.response?.data || error.message);
-            toast.error("Re-authenticate again", {
-                style: { background: "#393939", color: "#FFFFFF" },
-            });
-            navigate("/");
-        }
-    };
-
-
     const handleHome = () => {
         navigate("/manager-homepage");
     }
 
     useEffect(() => {
+        fetchUserInfo();
         fetchEmployeeData(my_id || "");
-    },[]);
+    }, []);
+
+    const fetchUserInfo = async () => {
+        try {
+        const res = await axios.get("http://localhost:8000/auth/me", {
+            withCredentials: true,
+        });
+
+        console.log("Fetched user data:", res.data);
+
+        const { ok, data, error } = res.data;
+
+        if (!ok || !data) {
+            toast.error(error || "Unable to verify permissions.", {
+            style: {
+                background: "#393939",
+                color: "#FFFFFF",
+            },
+            });
+            navigate("/");
+            return;
+        }
+
+        const userData = data;
+
+        if (userData.role !== "MANAGER") {
+            toast.error("Access denied. Managers only.", {
+            style: {
+                background: "#393939",
+                color: "#FFFFFF",
+            },
+            });
+            navigate("/");
+            return;
+        }
+
+        } catch (error: any) {
+        console.error("User info failed:", error.response?.data || error.message);
+
+        toast.error("Unable to verify permissions.", {
+            style: {
+            background: "#393939",
+            color: "#FFFFFF",
+            },
+        });
+        navigate("/");
+        }
+    };
+
 
     const fetchEmployeeData = async (managerId: string) => {
 
@@ -73,9 +80,7 @@ function ViewEmployeePage() {
         const response = await axios.get(
         `http://localhost:8000/users/manager/${managerId}/employees`,
         {
-            headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
+            withCredentials: true
         }
         );
 
