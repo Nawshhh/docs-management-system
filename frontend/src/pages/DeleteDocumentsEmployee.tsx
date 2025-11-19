@@ -31,7 +31,6 @@ const navigate = useNavigate();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const employeeId = localStorage.getItem("my_id");
-  
 
     useEffect(() => {
         fetchUserInfo();

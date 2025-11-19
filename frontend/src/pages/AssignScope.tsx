@@ -30,86 +30,99 @@ function AssignScope() {
 
   const [managers, setManagers] = useState<Manager[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
 
-
-    useEffect(() => {
-        fetchUserInfo();
-    }, []);
-
-    const fetchUserInfo = async () => {
-        const token = localStorage.getItem("token");
-        if (!token) {
-            console.log("No token found — user probably logged out");
-            toast.error("No permission. Admins only.", {
-                style: { background: "#393939", color: "#FFFFFF" },
-            });
-            navigate("/");
-            return;
-        }
-
-        try {
-            const res = await axios.get("http://localhost:8000/auth/me", {
-                headers: { Authorization: `Bearer ${token}` },
-                withCredentials: true,
-            });
-
-             
-
-            // role check using userData
-            if (res.data.data.role !== "ADMIN") {
-                toast.error("Access denied. Admins only.", {
-                style: { background: "#393939", color: "#FFFFFF" },
-                });
-                navigate("/");
-                return;
-            }
-
-        } catch (error: any) {
-            console.error("User info failed:", error.response?.data || error.message);
-            toast.error("Re-authenticate again", {
-                style: { background: "#393939", color: "#FFFFFF" },
-            });
-            navigate("/");
-        }
-    };
 
   useEffect(() => {
+    fetchUserInfo();
     fetchScopeData();
   }, []);
 
-  const fetchScopeData = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      toast.error("No permission. Please log in.", {
-        style: { background: "#393939", color: "#FFFFFF" },
+  const fetchUserInfo = async () => {
+    try {
+      const res = await axios.get("http://localhost:8000/auth/me", {
+        withCredentials: true,
+      });
+
+      console.log("Fetched user data:", res.data);
+
+      const { ok, data, error } = res.data;
+
+      if (!ok || !data) {
+        toast.error(error || "Unable to verify permissions.", {
+          style: {
+            background: "#393939",
+            color: "#FFFFFF",
+          },
+        });
+        navigate("/");
+        return;
+      }
+
+      const userData = data;
+
+      if (userData.role !== "ADMIN") {
+        toast.error("Access denied. Admins only.", {
+          style: {
+            background: "#393939",
+            color: "#FFFFFF",
+          },
+        });
+        navigate("/");
+        return;
+      }
+
+    } catch (error: any) {
+      console.error("User info failed:", error.response?.data || error.message);
+
+      toast.error("Unable to verify permissions.", {
+        style: {
+          background: "#393939",
+          color: "#FFFFFF",
+        },
       });
       navigate("/");
-      return;
     }
+  };
 
+  const fetchScopeData = async () => {
     try {
-      const headers = { Authorization: `Bearer ${token}` };
-
-      // Fetch managers and unassigned employees in parallel
+      // Fetch managers and employees in parallel
       const [mgrRes, empRes] = await Promise.all([
         axios.get("http://localhost:8000/users/get-managers", {
-          headers,
           withCredentials: true,
         }),
         axios.get("http://localhost:8000/users/get-employees", {
-          headers,
           withCredentials: true,
         }),
       ]);
 
-      const mgrData: Manager[] = mgrRes.data?.data || [];
-      const empData: Employee[] = empRes.data?.data || [];
+      const mgrEnvelope = mgrRes.data;
+      const empEnvelope = empRes.data;
+
+      if (!mgrEnvelope.ok || !empEnvelope.ok) {
+        toast.error(
+          mgrEnvelope.error ||
+            empEnvelope.error ||
+            "Failed to load scope data.",
+          {
+            style: { background: "#393939", color: "#FFFFFF" },
+          }
+        );
+        navigate("/");
+        return;
+      }
+
+      const mgrData: Manager[] = mgrEnvelope.data || [];
+      const empData: Employee[] = empEnvelope.data || [];
 
       setManagers(mgrData);
       setEmployees(empData);
     } catch (error: any) {
-      console.error("Error fetching scope data:", error.response?.data || error.message);
+      console.error(
+        "Error fetching scope data:",
+        error.response?.data || error.message
+      );
       toast.error("Failed to load scope data.", {
         style: { background: "#393939", color: "#FFFFFF" },
       });
@@ -119,25 +132,16 @@ function AssignScope() {
     }
   };
 
+
     const handleAssignManager = async (employeeId: string, managerId: string) => {
     if (!managerId) return;
-
-    const token = localStorage.getItem("token");
-    if (!token) {
-        toast.error("No permission. Please log in.", {
-        style: { background: "#393939", color: "#FFFFFF" },
-        });
-        navigate("/");
-        return;
-    }
 
     try {
         await axios.put(
         "http://localhost:8000/users/assign-manager",
         { employee_id: employeeId, manager_id: managerId },
         {
-            headers: { Authorization: `Bearer ${token}` },
-            withCredentials: true,
+          withCredentials: true,
         }
         );
 

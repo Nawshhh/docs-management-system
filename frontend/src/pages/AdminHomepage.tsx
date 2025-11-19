@@ -16,29 +16,28 @@ function AdminHomepage() {
   }, []);
 
   const fetchUserInfo = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      console.log("No token found — user probably logged out");
-      toast.error("No permission. Admins only.", {
-        style: {
-          background: "#393939",
-          color: "#FFFFFF",
-        },
-      });
-      navigate("/");
-      return; // important so we don't continue
-    }
-
     try {
       const res = await axios.get("http://localhost:8000/auth/me", {
-        headers: { Authorization: `Bearer ${token}` },
         withCredentials: true,
       });
 
-      const userData = res.data.data;
-       
+      console.log("Fetched user data:", res.data);
 
-      // role check: only allow ADMIN
+      const { ok, data, error } = res.data;
+
+      if (!ok || !data) {
+        toast.error(error || "Unable to verify permissions.", {
+          style: {
+            background: "#393939",
+            color: "#FFFFFF",
+          },
+        });
+        navigate("/");
+        return;
+      }
+
+      const userData = data;
+
       if (userData.role !== "ADMIN") {
         toast.error("Access denied. Admins only.", {
           style: {
@@ -56,25 +55,13 @@ function AdminHomepage() {
     } catch (error: any) {
       console.error("User info failed:", error.response?.data || error.message);
 
-      // If token is invalid/expired, force logout
-      if (error.response?.status === 401) {
-        toast.error("Session expired. Please log in again.", {
-          style: {
-            background: "#393939",
-            color: "#FFFFFF",
-          },
-        });
-        localStorage.removeItem("token");
-        navigate("/");
-      } else {
-        toast.error("Unable to verify permissions.", {
-          style: {
-            background: "#393939",
-            color: "#FFFFFF",
-          },
-        });
-        navigate("/");
-      }
+      toast.error("Unable to verify permissions.", {
+        style: {
+          background: "#393939",
+          color: "#FFFFFF",
+        },
+      });
+      navigate("/");
     } finally {
       setLoading(false);
     }

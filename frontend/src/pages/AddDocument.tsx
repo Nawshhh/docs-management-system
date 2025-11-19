@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -29,6 +29,45 @@ function AddDocument() {
 
     const handleBack = () => {
         navigate("/employee-homepage");
+    };
+
+    useEffect(() => {
+        fetchUserInfo();
+    }, []);
+
+    const fetchUserInfo = async () => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            console.log("No token found — user probably logged out");
+            toast.error("No permission. Employee only.", {
+                style: { background: "#393939", color: "#FFFFFF" },
+            });
+            navigate("/");
+            return;
+        }
+
+        try {
+            const res = await axios.get("http://localhost:8000/auth/me", {
+                headers: { Authorization: `Bearer ${token}` },
+                withCredentials: true,
+            });
+
+            // role check using userData
+            if (res.data.data.role !== "EMPLOYEE") {
+                toast.error("Access denied. Employees only.", {
+                style: { background: "#393939", color: "#FFFFFF" },
+                });
+                navigate("/");
+                return;
+            }
+
+        } catch (error: any) {
+            console.error("User info failed:", error.response?.data || error.message);
+            toast.error("Re-authenticate again", {
+                style: { background: "#393939", color: "#FFFFFF" },
+            });
+            navigate("/");
+        }
     };
 
   const handleSubmit = async (e: React.FormEvent) => {

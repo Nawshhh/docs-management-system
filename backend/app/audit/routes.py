@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends, Header, Request
 from motor.motor_asyncio import AsyncIOMotorDatabase
 import jwt
 
@@ -25,14 +25,23 @@ def format_datetime(dt):
 
 @router.get("/", response_model=ApiEnvelope)
 async def list_audit_logs(
+    request: Request,
     db: AsyncIOMotorDatabase = Depends(get_db),
-    authorization: str | None = Header(default=None, alias="Authorization")
+    authorization: str | None = Header(default=None, alias="Authorization"),
 ):
     try:
-        if not authorization or not authorization.startswith("Bearer "):
-            return fail("Missing or invalid authorization header")
+        token: str | None = None
 
-        token = authorization.split(" ", 1)[1]
+        # 1) Try Bearer header (for backwards compatibility)
+        if authorization and authorization.startswith("Bearer "):
+            token = authorization.split(" ", 1)[1]
+        else:
+            # 2) Fallback to access_token cookie (new flow)
+            token = request.cookies.get("access_token")
+
+        if not token:
+            return fail("Missing token (no header or cookie)")
+
         decoded = verify_token(token, secret=settings.JWT_SECRET)
         role = decoded.get("role")
 
@@ -47,11 +56,8 @@ async def list_audit_logs(
             log_dict["_id"] = str(log_dict.get("_id", ""))
             log_dict["actor_id"] = str(log_dict.get("actor_id", ""))
             log_dict["resource_id"] = str(log_dict.get("resource_id", ""))
-
-            # Format timestamps
             log_dict["created_at"] = format_datetime(log_dict.get("created_at"))
             log_dict["updated_at"] = format_datetime(log_dict.get("updated_at"))
-
             serialized_logs.append(log_dict)
 
         return ok(serialized_logs)

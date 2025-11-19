@@ -1,5 +1,5 @@
 # backend/app/deps.py
-from fastapi import Depends, Header, HTTPException, Security, status
+from fastapi import Depends, Header, HTTPException, Security, status, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
@@ -14,26 +14,54 @@ bearer_scheme = HTTPBearer(auto_error=False)
 
 
 async def get_current_user(
+    request: Request,
     db: AsyncIOMotorDatabase = Depends(get_db),
-    credentials: HTTPAuthorizationCredentials | None = Security(bearer_scheme),
+    authorization: str | None = Header(default=None, alias="Authorization"),
 ) -> UserDB:
-    if credentials is None or not credentials.scheme.lower() == "bearer":
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing Bearer token")
-    token = credentials.credentials
+    token: str | None = None
+
+    # 1) Try Authorization: Bearer <token> (old behavior, still supported)
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.split(" ", 1)[1]
+    else:
+        # 2) Fallback: use cookie-based auth
+        token = request.cookies.get("access_token")
+
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated (no token in header or cookie)",
+        )
+
+    # 3) Decode JWT
     try:
         decoded = verify_token(token, secret=settings.JWT_SECRET)
     except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Access token expired")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Access token expired",
+        )
     except jwt.InvalidTokenError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid access token",
+        )
 
-    uid = decoded.get("sub")
-    if not uid:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token (no sub)")
-    # load latest user
-    user = await users_repo.get_user(db, uid)
+    user_id = decoded.get("sub")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+        )
+
+    # 4) Load user from DB
+    user = await users_repo.get_user(db, user_id)
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unknown user")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+        )
+
     return user
 
 def require_admin(user: UserDB = Depends(get_current_user)) -> UserDB:

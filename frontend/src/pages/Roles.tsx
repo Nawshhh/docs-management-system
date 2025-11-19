@@ -11,46 +11,56 @@ function Roles() {
     navigate("/admin-homepage");
   }
 
-    useEffect(() => {
-        fetchUserInfo();
-    }, []);
+  useEffect(() => {
+    fetchUserInfo();
+  }, []);
 
-    const fetchUserInfo = async () => {
-        const token = localStorage.getItem("token");
-        if (!token) {
-            console.log("No token found — user probably logged out");
-            toast.error("No permission. Admins only.", {
-                style: { background: "#393939", color: "#FFFFFF" },
-            });
-            navigate("/");
-            return;
-        }
+  const fetchUserInfo = async () => {
+    try {
+      const res = await axios.get("http://localhost:8000/auth/me", {
+        withCredentials: true,
+      });
 
-        try {
-            const res = await axios.get("http://localhost:8000/auth/me", {
-                headers: { Authorization: `Bearer ${token}` },
-                withCredentials: true,
-            });
+      console.log("Fetched user data:", res.data);
 
-             
+      const { ok, data, error } = res.data;
 
-            // role check using userData
-            if (res.data.data.role !== "ADMIN") {
-                toast.error("Access denied. Admins only.", {
-                style: { background: "#393939", color: "#FFFFFF" },
-                });
-                navigate("/");
-                return;
-            }
+      if (!ok || !data) {
+        toast.error(error || "Unable to verify permissions.", {
+          style: {
+            background: "#393939",
+            color: "#FFFFFF",
+          },
+        });
+        navigate("/");
+        return;
+      }
 
-        } catch (error: any) {
-            console.error("User info failed:", error.response?.data || error.message);
-            toast.error("Re-authenticate again", {
-                style: { background: "#393939", color: "#FFFFFF" },
-            });
-            navigate("/");
-        }
-    };
+      const userData = data;
+
+      if (userData.role !== "ADMIN") {
+        toast.error("Access denied. Admins only.", {
+          style: {
+            background: "#393939",
+            color: "#FFFFFF",
+          },
+        });
+        navigate("/");
+        return;
+      }
+
+    } catch (error: any) {
+      console.error("User info failed:", error.response?.data || error.message);
+
+      toast.error("Unable to verify permissions.", {
+        style: {
+          background: "#393939",
+          color: "#FFFFFF",
+        },
+      });
+      navigate("/");
+    }
+  };
 
   return (
     <div className='w-screen h-screen flex flex-col items-center justify-center bg-zinc-900 px-20 md:px-80 sm:px-10'>

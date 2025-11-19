@@ -126,7 +126,7 @@ async def login(body: LoginBody, request: Request, db: AsyncIOMotorDatabase = De
         if "_id" in uout:
             uout["_id"] = str(uout["_id"])
 
-        # ✅ include previous last use in response
+        # include previous last use in response
         envelope = ok({
             "access": access,
             "user": uout,
@@ -134,6 +134,16 @@ async def login(body: LoginBody, request: Request, db: AsyncIOMotorDatabase = De
         })
 
         response = JSONResponse(content=jsonable_encoder(envelope))
+
+        response.set_cookie(
+            key="access_token",
+            value=access,
+            httponly=True,
+            secure=False,       # True in production (HTTPS)
+            samesite="lax",
+            max_age=ACCESS_TTL_MIN * 60,
+        )
+
         response.set_cookie(
             key="refresh_token",
             value=refresh,
@@ -184,24 +194,39 @@ async def refresh_token(request: Request, db: AsyncIOMotorDatabase = Depends(get
         return fail("Could not refresh token")
 
 @router.get("/me", response_model=ApiEnvelope)
-async def me(db: AsyncIOMotorDatabase = Depends(get_db), authorization: str | None = Header(default=None, alias="Authorization")):
+async def me(
+    request: Request,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    authorization: str | None = Header(default=None, alias="Authorization"),
+):
     try:
-        if not authorization or not authorization.startswith("Bearer "):
-            return fail("Missing or invalid authorization header")
-        token = authorization.split(" ", 1)[1]
+        token: str | None = None
+
+        # 1) Try Authorization header first
+        if authorization and authorization.startswith("Bearer "):
+            token = authorization.split(" ", 1)[1]
+        else:
+            # 2) Fallback: try cookie
+            token = request.cookies.get("access_token")
+
+        if not token:
+            return fail("Missing token (no header or cookie)")
+
         decoded = verify_token(token, secret=settings.JWT_SECRET)
         uid = decoded.get("sub")
         u = await users_repo.get_user(db, uid)
         if not u:
             return fail("User not found")
+
         return ok(u)
+
     except jwt.ExpiredSignatureError:
         return fail("Access token expired")
     except jwt.InvalidTokenError:
         return fail("Invalid access token")
     except Exception:
         return fail("Could not fetch profile")
-
+    
 @router.post("/logout")
 async def logout():
     try:

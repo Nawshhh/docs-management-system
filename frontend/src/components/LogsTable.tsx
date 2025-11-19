@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface Logs{
     id: string;
@@ -12,23 +13,65 @@ interface Logs{
 
 
 function LogsTable() {
+    const navigate = useNavigate();
 
     const [logs, setLogs] = useState<Logs[] | null>([]);
     
     useEffect(() => {
+        fetchUserInfo();
         fetchLogs();
     },[]);
 
+    const fetchUserInfo = async () => {
+        try {
+        const res = await axios.get("http://localhost:8000/auth/me", {
+            withCredentials: true,
+        });
+
+        console.log("Fetched user data:", res.data);
+
+        const { ok, data, error } = res.data;
+
+        if (!ok || !data) {
+            toast.error(error || "Unable to verify permissions.", {
+            style: {
+                background: "#393939",
+                color: "#FFFFFF",
+            },
+            });
+            navigate("/");
+            return;
+        }
+
+        const userData = data;
+
+        if (userData.role !== "ADMIN") {
+            toast.error("Access denied. Admins only.", {
+            style: {
+                background: "#393939",
+                color: "#FFFFFF",
+            },
+            });
+            navigate("/");
+            return;
+        }
+
+        } catch (error: any) {
+        console.error("User info failed:", error.response?.data || error.message);
+
+        toast.error("Unable to verify permissions.", {
+            style: {
+            background: "#393939",
+            color: "#FFFFFF",
+            },
+        });
+        navigate("/");
+        }
+    };
+
     const fetchLogs = async () => {
         try {
-            const token = localStorage.getItem("token");
-            if (!token){
-                toast.error("You must be logged in as admin to view logs");
-                return;
-            }
-
             const res = await axios.get("http://localhost:8000/logs" , {
-                headers: { Authorization:`Bearer ${token}`},
                 withCredentials: true,
             });
 
@@ -52,11 +95,6 @@ function LogsTable() {
             toast.error("Error fetching logs");
         }
     }
-
-
-    useEffect(() => {
-        console.log("These are the filtered logs: ", logs);
-    },[logs]);
 
   return (
     <>

@@ -33,9 +33,9 @@ function EmployeeHomepage() {
     const token = localStorage.getItem("token");
     if (!token) {
       console.log("No token found — user probably logged out");
-      toast.error("No permission. Employees only.", {
-        style: { background: "#393939", color: "#FFFFFF" },
-      });
+        toast.error("Please Log-in Again.", {
+            style: { background: "#393939", color: "#FFFFFF" },
+        });
       navigate("/");
       return;
     }

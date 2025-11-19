@@ -59,17 +59,12 @@ function RolesTable() {
         console.log("User ID: ", acc_id);
 
         try {
-            const token = localStorage.getItem("token"); // optional if route needs auth
             const res = await axios.patch(`http://localhost:8000/users/${acc_id}/role`,
                 { 
                     role: new_role
                 },
                 {
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                withCredentials: true,
+                    withCredentials: true,
                 }
             );
             console.log(res);
@@ -95,8 +90,6 @@ function RolesTable() {
             {}, 
             { withCredentials: true } 
             );
-
-            localStorage.removeItem("token");
 
             navigate("/");
 

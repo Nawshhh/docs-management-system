@@ -18,10 +18,10 @@ function LoginModal() {
     setError(null);
 
     try {
-      const response = await axios.post("http://localhost:8000/auth/login", {
-        email,
-        password,
-      });
+      const response = await axios.post("http://localhost:8000/auth/login", 
+        { email, password},
+        { withCredentials: true }
+      );
 
       const { ok, data, error } = response.data;
 
@@ -30,9 +30,7 @@ function LoginModal() {
         return;
       }
 
-      const token = data?.access;
       const lastUse = data?.last_use;
-      console.log("Login successful, token:", token);
 
       if (lastUse?.at) {
         const date = new Date(lastUse.at);
@@ -50,8 +48,6 @@ function LoginModal() {
         });
       }
 
-      if (token) {
-        localStorage.setItem("token", token);
         if (data.user.role === "ADMIN") {
           navigate("/admin-homepage");
         } else if (data.user.role === "MANAGER") {
@@ -60,10 +56,7 @@ function LoginModal() {
         } else {
           navigate("/employee-homepage");
         }
-      } else {
-        console.error("No access token returned:", response.data);
-        setError("No access token returned.");
-      }
+      
     } catch (err: any) {
       const backendError = err.response?.data?.error;
       console.error("Login failed:", err.response?.data || err.message);
