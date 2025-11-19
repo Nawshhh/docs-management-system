@@ -2,7 +2,7 @@
 from typing import Optional
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from datetime import datetime
+from datetime import datetime, timezone
 import bcrypt
 
 from ..models import UserCreate, UserDB, UserOut, Role
@@ -82,7 +82,7 @@ async def update_password(
     history = user_doc.get("password_history", [])
 
     # 1) check new password against current + history
-    all_hashes = []
+    all_hashes: list[str] = []
     if current_hash:
         all_hashes.append(current_hash)
     for entry in history:
@@ -95,23 +95,26 @@ async def update_password(
             return False, "New password was used recently. Please choose a different one."
 
     # 2) if valid, push current password into history
+    now = datetime.now(timezone.utc)
+
     if current_hash:
         history.insert(0, {
             "password_hash": current_hash,
-            "changed_at": datetime.utcnow()
+            "changed_at": now,   # timezone-aware
         })
         history = history[:MAX_HISTORY]
 
     # 3) hash the new password
     new_hash = bcrypt.hashpw(new_plain_password.encode(), bcrypt.gensalt()).decode()
 
-    # 4) save
+    # 4) save new password, history, and last_password_change_at
     await db[COLL].update_one(
         {"_id": user_doc["_id"]},
         {
             "$set": {
                 "password_hash": new_hash,
                 "password_history": history,
+                "last_password_change_at": now,
             }
         }
     )

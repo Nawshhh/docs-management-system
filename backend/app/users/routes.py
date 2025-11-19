@@ -4,8 +4,6 @@ from pydantic import BaseModel
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from pymongo.errors import DuplicateKeyError
 
-
-
 from ..deps import require_admin
 from ..db import get_db
 from ..models import Role, UserCreate, UserOut
@@ -14,7 +12,7 @@ from ..repos import audit_logs as logs_repo
 from ..api import ok, fail, ApiEnvelope
 
 from bson import ObjectId
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 
@@ -355,22 +353,72 @@ class ResetPasswordBody(BaseModel):
     user_id: str | None = None
     new_password : str | None = None
 
+
 @router.post("/reset-password", response_model=ApiEnvelope)
 async def reset_user_password(
     body: ResetPasswordBody,
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     try:
+        # 1) Fetch user
+        user_doc = await db["users"].find_one({"_id": ObjectId(body.user_id)})
+        if not user_doc:
+            return fail("User not found")
+
+        now = datetime.now(timezone.utc)
+
+        # 2) Cooldown check — only IF the user has changed password before
+        last_change = user_doc.get("last_password_change_at")
+
+        # Only enforce cooldown when last_change is a datetime
+        if isinstance(last_change, datetime):
+
+            # Normalize naive -> UTC
+            if last_change.tzinfo is None:
+                last_change = last_change.replace(tzinfo=timezone.utc)
+
+            delta = now - last_change
+            one_day = timedelta(days=1)
+
+            if delta < one_day:
+                remaining = one_day - delta
+                remaining_seconds = int(remaining.total_seconds())
+
+                print(f"Password change cooldown: {remaining_seconds} seconds remaining.")
+
+                hours = remaining_seconds // 3600
+                minutes = (remaining_seconds % 3600) // 60
+
+                message = f"Password was recently changed. Please try again after {hours} hours and {minutes} minutes."
+
+                return {
+                    "ok": False,
+                    "error": message,
+                    "remaining_seconds": remaining_seconds,
+                }
+
+        # 3) Continue with password change
         ok_flag, err_msg = await users_repo.update_password(
             db, body.user_id, body.new_password
         )
+
         if not ok_flag:
             return fail(err_msg or "Password reset failed")
+
+        # 4) Set last_password_change_at ONLY AFTER a successful change
+        await db["users"].update_one(
+            {"_id": ObjectId(body.user_id)},
+            {"$set": {"last_password_change_at": now}},
+        )
+
         return ok()
+
     except Exception as e:
         print(f"Error resetting user password: {e}")
         return fail("Could not reset password")
-    
+
+
+
 class GetUserByEmailBody(BaseModel):
     email: str | None = None
 

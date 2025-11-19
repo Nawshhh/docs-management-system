@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 
 function ForgotPasswordModal() {
@@ -11,10 +11,14 @@ function ForgotPasswordModal() {
     const [foundEmail, setFoundEmail] = useState<boolean>(false);
     const [matchedNickname, setMatchedNickname] = useState<boolean>(false);
     const [newPassword, setNewPassword] = useState<string>("");
-
     const [changeError, setChangeError] = useState<string | null>(null);
+    const [cooldownSeconds, setCooldownSeconds] = useState<number | null>(null);
 
     const navigate = useNavigate();
+
+    const handleHome = () => {
+        navigate("/");
+    }
 
     const newPasswordChecks = {
         length: newPassword.length >= 7,
@@ -95,40 +99,82 @@ function ForgotPasswordModal() {
 
 
     const handleChangePassword = async () => {
-        try {
-            setChangeError(null);
-            const userRes = await axios.post(
-            "http://localhost:8000/users/get-user-by-email",
-            { email }
-            );
+    try {
+        setChangeError(null);
 
-            const userId = userRes.data.data; // since backend returns just the id string
+        const userRes = await axios.post(
+        "http://localhost:8000/users/get-user-by-email",
+        { email }
+        );
 
-            const res = await axios.post(
-            "http://localhost:8000/users/reset-password",
-            { user_id: userId, new_password: newPassword }
-            );
+        const userId = userRes.data.data; // backend returns just the id string
 
-            console.log("Change password message:", res.data);
+        const res = await axios.post(
+        "http://localhost:8000/users/reset-password",
+        { user_id: userId, new_password: newPassword }
+        );
 
-            if (!res.data.ok) {
-            // backend may send: "New password was used recently..."
+        // console.log("Change password message:", res.data);
+
+        if (!res.data.ok) {
+            // console.log("Password change failed:", res.data.remaining_seconds);
+        // if backend sends remaining_seconds, start cooldown
+            if (typeof res.data.remaining_seconds === "number") {
+                setCooldownSeconds(res.data.remaining_seconds);
+            }
             setChangeError(res.data.error || "Could not change password.");
             return;
-            }
-
-            toast.success("Password changed successfully.");
-            setNewPassword("");
-            navigate("/");
-        } catch (error: any) {
-            const serverErr = error.response?.data?.error;
-            setChangeError(serverErr || "Something went wrong. Please try again.");
         }
+
+        toast.success("Password changed successfully.");
+        setNewPassword("");
+        setCooldownSeconds(null);
+        navigate("/");
+    } catch (error: any) {
+        const serverData = error.response?.data;
+        const serverErr = serverData?.error as string | undefined;
+        const remaining = serverData?.remaining_seconds;
+
+        if (typeof remaining === "number") {
+        setCooldownSeconds(remaining);
+        }
+
+        setChangeError(serverErr || "Something went wrong. Please try again.");
+    }
     };
+
 
     const handleBackToLogin = () => {
         navigate("/");
     }
+
+    useEffect(() => {
+    if (cooldownSeconds === null) return;
+
+    if (cooldownSeconds <= 0) {
+        setCooldownSeconds(null);
+        return;
+    }
+
+    const timer = setInterval(() => {
+        setCooldownSeconds((prev) => {
+        if (prev === null) return null;
+        if (prev <= 1) return null;
+        return prev - 1;
+        });
+    }, 1000);
+
+    return () => clearInterval(timer);
+    }, [cooldownSeconds]);
+
+    const formatCooldown = (secs: number) => {
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    const s = secs % 60;
+
+    const pad = (n: number) => n.toString().padStart(2, "0");
+    return `${pad(h)}:${pad(m)}:${pad(s)}`;
+    };
 
   return (
     <div className='h-auto w-auto py-8 px-8 rounded-md flex flex-col items-center justify-center'>
@@ -223,19 +269,38 @@ function ForgotPasswordModal() {
                     </div>
 
 
-                    {changeError && (
-                        <p className="text-red-400 text-xs mt-1">{changeError}</p>
+                    {(changeError == "New password was used recently. Please choose a different one.") && (
+                        <>
+                            <p className="text-red-400 text-xs mt-1">{changeError}</p>
+                        </>
+                    )}
+
+                    {(changeError?.includes("hours")) && (
+                        <>
+                            <p className="text-red-400 text-xs mt-1">{changeError}</p>
+                            <button 
+                                onClick={handleHome}
+                                className='mt-5 h-8 px-10 bg-neutral-700 hover:bg-neutral-600 rounded-md text-gray-200 hover:text-gray-300 text-sm cursor-pointer'
+                            >Back to Login</button>
+                        </>
+                    )}
+
+
+                    {cooldownSeconds !== null && (
+                        <p className="text-yellow-400 text-xs mt-1">
+                            You can change your password again in {formatCooldown(cooldownSeconds)}.
+                        </p>
                     )}
 
                     <button 
-                    onClick={handleChangePassword}  // if you have a handler
-                    disabled={!isNewPasswordValid}
-                    className={`h-8 px-10 rounded-md text-gray-200 text-sm cursor-pointer
-                        ${!isNewPasswordValid
-                        ? "bg-sky-900 text-gray-400 cursor-not-allowed"
-                        : "bg-sky-700 hover:bg-sky-600 hover:text-gray-300"
-                        }`}
-                    >
+                        onClick={handleChangePassword}  // if you have a handler
+                        disabled={!isNewPasswordValid}
+                        className={`h-8 px-10 rounded-md text-gray-200 text-sm cursor-pointer
+                            ${!isNewPasswordValid
+                            ? "bg-sky-900 text-gray-400 cursor-not-allowed"
+                            : "bg-sky-700 hover:bg-sky-600 hover:text-gray-300"
+                            }`}
+                        >
                     Change</button>
                 </div>
             )}
