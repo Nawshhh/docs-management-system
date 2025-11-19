@@ -120,7 +120,7 @@ function ViewEmployeeDocuments() {
         onClick={handleBack}
         className="mt-1 h-8 px-10 bg-neutral-700 hover:bg-neutral-600 rounded-md text-gray-200 hover:text-gray-300 text-sm cursor-pointer"
       >
-        Back to Documents
+        Back to Home
       </button>
 
       {/* Modal for document details */}

@@ -21,6 +21,7 @@ import ApproveDocuments from './pages/ApproveDocuments';
 import DeleteDocuments from './pages/DeleteDocuments';
 import RejectDocuments from './pages/RejectDocuments';
 import ViewEmployeeDocuments from './pages/ViewEmployeeDocuments';
+import AddDocument from './pages/AddDocument';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -43,6 +44,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/delete-documents" element={<DeleteDocuments/>}></Route>      
         <Route path="/reject-documents" element={<RejectDocuments/>}></Route> 
         <Route path="/view-my-documents" element={<ViewEmployeeDocuments/>}></Route> 
+        <Route path="/add-document" element={<AddDocument/>}></Route> 
 
       </Routes>
       <Toaster position="bottom-right" reverseOrder={true}/>

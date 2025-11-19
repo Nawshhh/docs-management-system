@@ -77,13 +77,13 @@ function EmployeeHomepage() {
 
     const handleButtonClick = (dest: number) => {
         if (dest === 1) navigate("/view-my-documents");
-        if (dest === 2) navigate("/");
+        if (dest === 2) navigate("/add-document");
     };
 
   if (loading) {
     return (
       <div className="w-screen h-screen flex items-center justify-center bg-zinc-900">
-        <span className="text-gray-200 text-xl">Checking manager permissions...</span>
+        <span className="text-gray-200 text-xl">Checking employee permissions...</span>
       </div>
     );
   }
@@ -106,6 +106,7 @@ function EmployeeHomepage() {
           View All Documents
         </button>
         <button
+            onClick={() => handleButtonClick(2)}
           className="flex items-center justify-center bg-slate-700 hover:bg-slate-600 rounded-md h-20 cursor-pointer"
         >
           Add Document
