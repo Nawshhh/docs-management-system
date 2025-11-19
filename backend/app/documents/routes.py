@@ -70,6 +70,36 @@ async def create_document(
         print("Error creating document:", e)
         return fail("Could not create document")
 
+@router.put("/", response_model=ApiEnvelope)
+async def create_document(
+    body: DocCreateBody,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    """
+    Public: caller must provide user_id (owner) explicitly in the body.
+    """
+    try:
+        payload = DocumentCreate(
+            title=body.title,
+            description=body.description,
+            attachments=[],
+        )
+        doc = await docs_repo.create_document(db, body.user_id, payload)
+
+        await logs_repo.log_event(
+            db,
+            body.user_id or "000000000000000000000000",
+            "DOC_CREATE",
+            "DOCUMENT",
+            doc.id,
+            {"title": doc.title},
+        )
+        return ok(doc)
+    except Exception as e:
+        print("Error creating document:", e)
+        return fail("Could not create document")
+
+
 
 @router.get("/mine", response_model=ApiEnvelope)
 async def list_my_documents(

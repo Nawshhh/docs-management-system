@@ -78,6 +78,8 @@ function EmployeeHomepage() {
     const handleButtonClick = (dest: number) => {
         if (dest === 1) navigate("/view-my-documents");
         if (dest === 2) navigate("/add-document");
+        if (dest === 3) navigate("/edit-document");
+        if (dest === 4) navigate("/delete-document");
     };
 
   if (loading) {
@@ -112,11 +114,13 @@ function EmployeeHomepage() {
           Add Document
         </button>
         <button
+            onClick={() => handleButtonClick(3)}
           className="flex items-center justify-center bg-slate-700 hover:bg-slate-600 rounded-md h-20 cursor-pointer"
         >
           Edit Document
         </button>
         <button
+            onClick={() => handleButtonClick(3)}
           className="flex items-center justify-center bg-slate-700 hover:bg-slate-600 rounded-md h-20 cursor-pointer"
         >
           Delete Document
