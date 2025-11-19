@@ -36,35 +36,46 @@ function AddDocument() {
     }, []);
 
     const fetchUserInfo = async () => {
-        const token = localStorage.getItem("token");
-        if (!token) {
-            console.log("No token found — user probably logged out");
-            toast.error("No permission. Employee only.", {
-                style: { background: "#393939", color: "#FFFFFF" },
-            });
-            navigate("/");
-            return;
-        }
-
         try {
             const res = await axios.get("http://localhost:8000/auth/me", {
-                headers: { Authorization: `Bearer ${token}` },
                 withCredentials: true,
             });
 
-            // role check using userData
-            if (res.data.data.role !== "EMPLOYEE") {
-                toast.error("Access denied. Employees only.", {
-                style: { background: "#393939", color: "#FFFFFF" },
+            console.log("Fetched user data:", res.data);
+
+            const { ok, data, error } = res.data;
+
+            if (!ok || !data) {
+                toast.error(error || "Unable to verify permissions.", {
+                style: {
+                    background: "#393939",
+                    color: "#FFFFFF",
+                },
                 });
                 navigate("/");
                 return;
             }
 
+            const userData = data;
+
+            if (userData.role !== "EMPLOYEE") {
+                toast.error("Access denied. Employee only.", {
+                style: {
+                    background: "#393939",
+                    color: "#FFFFFF",
+                },
+                });
+                navigate("/");
+                return;
+            }
         } catch (error: any) {
             console.error("User info failed:", error.response?.data || error.message);
-            toast.error("Re-authenticate again", {
-                style: { background: "#393939", color: "#FFFFFF" },
+
+            toast.error("Unable to verify permissions.", {
+                style: {
+                background: "#393939",
+                color: "#FFFFFF",
+                },
             });
             navigate("/");
         }
@@ -90,7 +101,7 @@ function AddDocument() {
       return;
     }
 
-    const employeeId = localStorage.getItem("my_id"); // or "employee_id" if that's your key
+    const employeeId = localStorage.getItem("my_id");
     if (!employeeId) {
       toast.error("No employee ID found. Please log in again.", {
         style: { background: "#393939", color: "#FFFFFF" },

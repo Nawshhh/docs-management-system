@@ -25,55 +25,60 @@ function EmployeeHomepage() {
   const [firstName, setFirstName] = useState<string>("Manager");
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchUserInfo();
-  }, []);
+    useEffect(() => {
+        fetchUserInfo();
+    }, []);
 
-  const fetchUserInfo = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      console.log("No token found — user probably logged out");
-        toast.error("Please Log-in Again.", {
-            style: { background: "#393939", color: "#FFFFFF" },
-        });
-      navigate("/");
-      return;
-    }
+    const fetchUserInfo = async () => {
+        try {
+            const res = await axios.get("http://localhost:8000/auth/me", {
+                withCredentials: true,
+            });
 
-    try {
-      const res = await axios.get("http://localhost:8000/auth/me", {
-        headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true,
-      });
+            console.log("Fetched user data:", res.data);
 
-      const userData: User = res.data.data;
+            const { ok, data, error } = res.data;
 
-        // store my_id in localStorage
-        if (userData?.id) {
-        localStorage.setItem("my_id", userData.id);
+            if (!ok || !data) {
+                toast.error(error || "Unable to verify permissions.", {
+                style: {
+                    background: "#393939",
+                    color: "#FFFFFF",
+                },
+                });
+                navigate("/");
+                return;
+            }
+
+            const userData = data;
+
+            if (userData.role !== "EMPLOYEE") {
+                toast.error("Access denied. Employees only.", {
+                style: {
+                    background: "#393939",
+                    color: "#FFFFFF",
+                },
+                });
+                navigate("/");
+                return;
+            }
+
+            setUser(userData);
+            setFirstName(userData.profile?.first_name || "Employee");
+        } catch (error: any) {
+            console.error("User info failed:", error.response?.data || error.message);
+
+            toast.error("Unable to verify permissions.", {
+                style: {
+                background: "#393939",
+                color: "#FFFFFF",
+                },
+            });
+            navigate("/");
+        } finally {
+            setLoading(false);
         }
-
-      // role check using userData
-      if (userData.role !== "EMPLOYEE") {
-        toast.error("Access denied. Employees only.", {
-          style: { background: "#393939", color: "#FFFFFF" },
-        });
-        navigate("/");
-        return;
-      }
-
-      setUser(userData);
-      setFirstName(userData.profile?.first_name || "Employee");
-    } catch (error: any) {
-      console.error("User info failed:", error.response?.data || error.message);
-        toast.error("Re-authenticate again", {
-          style: { background: "#393939", color: "#FFFFFF" },
-        });
-        navigate("/");
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
     const handleButtonClick = (dest: number) => {
         if (dest === 1) navigate("/view-my-documents");

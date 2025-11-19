@@ -25,60 +25,60 @@ function ManagerHomepage() {
   const [firstName, setFirstName] = useState<string>("Manager");
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchUserInfo();
-  }, []);
+    useEffect(() => {
+        fetchUserInfo();
+    }, []);
 
-  const fetchUserInfo = async () => {
-    try {
-      const res = await axios.get("http://localhost:8000/auth/me", {
-        withCredentials: true,
-      });
+    const fetchUserInfo = async () => {
+        try {
+        const res = await axios.get("http://localhost:8000/auth/me", {
+            withCredentials: true,
+        });
 
-      console.log("Fetched user data:", res.data);
+        console.log("Fetched user data:", res.data);
 
-      const { ok, data, error } = res.data;
+        const { ok, data, error } = res.data;
 
-      if (!ok || !data) {
-        toast.error(error || "Unable to verify permissions.", {
-          style: {
+        if (!ok || !data) {
+            toast.error(error || "Unable to verify permissions.", {
+            style: {
+                background: "#393939",
+                color: "#FFFFFF",
+            },
+            });
+            navigate("/");
+            return;
+        }
+
+        const userData = data;
+
+        if (userData.role !== "MANAGER") {
+            toast.error("Access denied. Manager only.", {
+            style: {
+                background: "#393939",
+                color: "#FFFFFF",
+            },
+            });
+            navigate("/");
+            return;
+        }
+
+        setUser(userData);
+        setFirstName(userData.profile?.first_name || "Manager");
+        } catch (error: any) {
+        console.error("User info failed:", error.response?.data || error.message);
+
+        toast.error("Unable to verify permissions.", {
+            style: {
             background: "#393939",
             color: "#FFFFFF",
-          },
+            },
         });
         navigate("/");
-        return;
-      }
-
-      const userData = data;
-
-      if (userData.role !== "MANAGER") {
-        toast.error("Access denied. Manager only.", {
-          style: {
-            background: "#393939",
-            color: "#FFFFFF",
-          },
-        });
-        navigate("/");
-        return;
-      }
-
-      setUser(userData);
-      setFirstName(userData.profile?.first_name || "Manager");
-    } catch (error: any) {
-      console.error("User info failed:", error.response?.data || error.message);
-
-      toast.error("Unable to verify permissions.", {
-        style: {
-          background: "#393939",
-          color: "#FFFFFF",
-        },
-      });
-      navigate("/");
-    } finally {
-      setLoading(false);
-    }
-  };
+        } finally {
+        setLoading(false);
+        }
+    };
 
     const handleButtonClick = (dest: number) => {
         if (dest === 1) navigate("/view-scope", { state: { my_id: user!.id } });
