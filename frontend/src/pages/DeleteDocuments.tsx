@@ -52,8 +52,6 @@ function DeleteDocuments() {
                 withCredentials: true,
             });
 
-             
-
             // role check using userData
             if (res.data.data.role !== "MANAGER") {
                 toast.error("Access denied. Managers only.", {
@@ -231,8 +229,6 @@ function DeleteDocuments() {
                   const key = doc.id || doc._id || idx;
                   const docName = doc.title || "Untitled";
                   const docOwner = doc.owner_id || "—";
-                  const docId = doc.id || doc._id || String(idx);
-                  const isDeleting = deletingId === docId;
 
                   return (
                     <tr
