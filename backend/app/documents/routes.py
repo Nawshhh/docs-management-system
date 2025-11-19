@@ -406,3 +406,19 @@ async def list_all_documents(
     except Exception as e:
         print("Could not list documents:", e)
         return fail("Could not list documents")
+
+# ---------- Employee routes ----------
+@router.get("/employee/{employee_id}", response_model=ApiEnvelope)
+async def list_employee_documents(
+    employee_id: str,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    """
+    Public: list all documents for a specific employee.
+    """
+    try:
+        items = await docs_repo.get_documents(db, employee_id)
+        return ok(items)
+    except Exception as e:
+        print("Could not list employee documents:", e)
+        return fail("Could not list employee documents")

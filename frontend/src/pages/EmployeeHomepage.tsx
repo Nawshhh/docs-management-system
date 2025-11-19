@@ -47,7 +47,6 @@ function EmployeeHomepage() {
       });
 
       const userData: User = res.data.data;
-       
 
         // store my_id in localStorage
         if (userData?.id) {
@@ -76,10 +75,10 @@ function EmployeeHomepage() {
     }
   };
 
-    // const handleButtonClick = (dest: number) => {
-    //     if (dest === 1) navigate("/view-scope", { state: { my_id: user!.id } });
-    //     if (dest === 2) navigate("/documents", { state: { my_id: user!.id } });
-    // };
+    const handleButtonClick = (dest: number) => {
+        if (dest === 1) navigate("/view-my-documents");
+        if (dest === 2) navigate("/");
+    };
 
   if (loading) {
     return (
@@ -101,6 +100,7 @@ function EmployeeHomepage() {
 
       <div className="grid grid-cols-2 gap-6 w-full my-10 text-gray-200 text-xl font-semibold">
         <button
+            onClick={() => handleButtonClick(1)}
           className="flex items-center justify-center bg-slate-700 hover:bg-slate-600 rounded-md h-20 cursor-pointer"
         >
           View All Documents
