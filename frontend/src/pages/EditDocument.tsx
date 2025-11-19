@@ -18,69 +18,69 @@ const TITLE_MAX = 50;
 const DESC_MAX = 100;
 
 function EditDocument() {
-  const navigate = useNavigate();
+    const navigate = useNavigate();
 
-  const [documents, setDocuments] = useState<Document[]>([]);
-  const [loading, setLoading] = useState(true);
+    const [documents, setDocuments] = useState<Document[]>([]);
+    const [loading, setLoading] = useState(true);
 
-  const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+    const [title, setTitle] = useState("");
+    const [description, setDescription] = useState("");
+    const [submitting, setSubmitting] = useState(false);
 
-  const employeeId = localStorage.getItem("my_id");
+    const employeeId = localStorage.getItem("my_id");
 
-  const handleBack = () => {
-    navigate("/employee-homepage");
-  };
-
-  const formatDate = (value?: string) => {
-    if (!value) return "-";
-    const d = new Date(value);
-    if (Number.isNaN(d.getTime())) return value;
-    return d.toLocaleString("en-PH", { timeZone: "Asia/Manila" });
-  };
-
-  // Fetch all documents for this employee
-  useEffect(() => {
-    const fetchDocs = async () => {
-      if (!employeeId) {
-        toast.error("No employee ID found. Please log in again.", {
-          style: { background: "#393939", color: "#FFFFFF" },
-        });
-        navigate("/");
-        return;
-      }
-
-      try {
-        const res = await axios.get(
-          `http://localhost:8000/documents/employee/${employeeId}`
-        );
-
-        const items: Document[] = res.data?.data || [];
-        setDocuments(items);
-      } catch (error: any) {
-        console.error(
-          "Error fetching documents:",
-          error.response?.data || error.message
-        );
-        toast.error("Failed to load documents.", {
-          style: { background: "#393939", color: "#FFFFFF" },
-        });
-      } finally {
-        setLoading(false);
-      }
+    const handleBack = () => {
+        navigate("/employee-homepage");
     };
 
-    fetchDocs();
-  }, [employeeId, navigate]);
+    const formatDate = (value?: string) => {
+        if (!value) return "-";
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return value;
+        return d.toLocaleString("en-PH", { timeZone: "Asia/Manila" });
+    };
+
+    // Fetch all documents for this employee
+    useEffect(() => {
+        const fetchDocs = async () => {
+        if (!employeeId) {
+            toast.error("No employee ID found. Please log in again.", {
+            style: { background: "#393939", color: "#FFFFFF" },
+            });
+            navigate("/");
+            return;
+        }
+
+        try {
+            const res = await axios.get(
+            `http://localhost:8000/documents/employee/${employeeId}`
+            );
+
+            const items: Document[] = res.data?.data || [];
+            setDocuments(items);
+        } catch (error: any) {
+            console.error(
+            "Error fetching documents:",
+            error.response?.data || error.message
+            );
+            toast.error("Failed to load documents.", {
+            style: { background: "#393939", color: "#FFFFFF" },
+            });
+        } finally {
+            setLoading(false);
+        }
+        };
+
+        fetchDocs();
+    }, [employeeId, navigate]);
 
     useEffect(() => {
         fetchUserInfo();
     }, []);
-    
+
     const fetchUserInfo = async () => {
         try {
             const res = await axios.get("http://localhost:8000/auth/me", {
@@ -127,100 +127,104 @@ function EditDocument() {
         }
     };
 
-  const openModal = (doc: Document) => {
-    setSelectedDoc(doc);
-    setTitle(doc.title || "");
-    setDescription(doc.description || "");
-    setIsModalOpen(true);
-  };
+    const openModal = (doc: Document) => {
+        setSelectedDoc(doc);
+        setTitle(doc.title || "");
+        setDescription(doc.description || "");
+        setIsModalOpen(true);
+    };
 
-  const closeModal = () => {
-    if (submitting) return;
-    setIsModalOpen(false);
-    setSelectedDoc(null);
-    setTitle("");
-    setDescription("");
-  };
+    const closeModal = () => {
+        if (submitting) return;
+        setIsModalOpen(false);
+        setSelectedDoc(null);
+        setTitle("");
+        setDescription("");
+    };
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+    const handleSave = async (e: React.FormEvent) => {
+        e.preventDefault();
 
-    if (!selectedDoc) return;
+        if (!selectedDoc) return;
 
-    const trimmedTitle = title.trim();
-    const trimmedDesc = description.trim();
+        const trimmedTitle = title.trim();
+        const trimmedDesc = description.trim();
 
-    if (!trimmedTitle || !trimmedDesc) {
-      toast.error("Please fill in both title and description.", {
-        style: { background: "#393939", color: "#FFFFFF" },
-      });
-      return;
-    }
+        if (!trimmedTitle || !trimmedDesc) {
+        toast.error("Please fill in both title and description.", {
+            style: { background: "#393939", color: "#FFFFFF" },
+        });
+        return;
+        }
 
-    if (trimmedTitle.length > TITLE_MAX || trimmedDesc.length > DESC_MAX) {
-      toast.error("Please respect the character limits.", {
-        style: { background: "#393939", color: "#FFFFFF" },
-      });
-      return;
-    }
+        if (trimmedTitle.length > TITLE_MAX || trimmedDesc.length > DESC_MAX) {
+        toast.error("Please respect the character limits.", {
+            style: { background: "#393939", color: "#FFFFFF" },
+        });
+        return;
+        }
 
-    if (!employeeId) {
-      toast.error("No user ID found. Please log in again.", {
-        style: { background: "#393939", color: "#FFFFFF" },
-      });
-      return;
-    }
+        if (!employeeId) {
+        toast.error("No user ID found. Please log in again.", {
+            style: { background: "#393939", color: "#FFFFFF" },
+        });
+        return;
+        }
 
-    const docId = selectedDoc.id || selectedDoc._id;
-    if (!docId) {
-      toast.error("Invalid document ID.", {
-        style: { background: "#393939", color: "#FFFFFF" },
-      });
-      return;
-    }
+        const docId = selectedDoc.id || selectedDoc._id;
+        if (!docId) {
+        toast.error("Invalid document ID.", {
+            style: { background: "#393939", color: "#FFFFFF" },
+        });
+        return;
+        }
 
-    try {
-      setSubmitting(true);
+        try {
+        setSubmitting(true);
 
-      const res = await axios.put("http://localhost:8000/documents", {
-        doc_id: docId,
-        title: trimmedTitle,
-        description: trimmedDesc,
-        user_id: employeeId,
-      });
-
-      console.log("Document updated:", res.data);
-      toast.success("Document updated successfully!", {
-        style: { background: "#393939", color: "#FFFFFF" },
-      });
-
-      // Update local state so the table reflects the changes
-      setDocuments((prev) =>
-        prev.map((d) =>
-          d.id === docId || d._id === docId
-            ? {
-                ...d,
+            const res = await axios.patch(
+            `http://localhost:8000/documents/${docId}`,
+            {
                 title: trimmedTitle,
                 description: trimmedDesc,
-                updated_at: new Date().toISOString(),
-              }
-            : d
-        )
-      );
+                user_id: employeeId, 
+            },
+            {
+                withCredentials: true,
+            }
+            );
 
-      closeModal();
-    } catch (error: any) {
-      console.error(
-        "Error updating document:",
-        error.response?.data || error.message
-      );
-      toast.error("Failed to update document.", {
-        style: { background: "#393939", color: "#FFFFFF" },
-      });
-    } finally {
-      setSubmitting(false);
-    }
-  };
+        console.log("Document updated:", res.data);
+        toast.success("Document updated successfully!", {
+            style: { background: "#393939", color: "#FFFFFF" },
+        });
+        // referesh
+        setDocuments((prev) =>
+            prev.map((d) =>
+            d.id === docId || d._id === docId
+                ? {
+                    ...d,
+                    title: trimmedTitle,
+                    description: trimmedDesc,
+                    updated_at: new Date().toISOString(),
+                }
+                : d
+            )
+        );
+
+        closeModal();
+        } catch (error: any) {
+        console.error(
+            "Error updating document:",
+            error.response?.data || error.message
+        );
+        toast.error("Failed to update document.", {
+            style: { background: "#393939", color: "#FFFFFF" },
+        });
+        } finally {
+        setSubmitting(false);
+        }
+    };
 
   return (
     <div className="w-screen h-screen flex flex-col items-center justify-center bg-zinc-900 px-20 md:px-80 sm:px-10">

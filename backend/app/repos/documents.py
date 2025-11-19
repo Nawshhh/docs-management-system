@@ -166,3 +166,13 @@ async def delete_document(db: AsyncIOMotorDatabase, doc_id: str) -> bool:
 async def list_all_documents(db: AsyncIOMotorDatabase) -> list[DocumentOut]:
     cursor = db[COLL].find().sort("created_at", -1)
     return [_doc_to_out(d) async for d in cursor]
+
+async def update_document(db, doc_id: str, fields: dict) -> DocumentDB | None:
+    res = await db["documents"].find_one_and_update(
+        {"_id": to_obj_id(doc_id)},
+        {"$set": fields},
+        return_document=True,
+    )
+    if not res:
+        return None
+    return DocumentDB(**res)

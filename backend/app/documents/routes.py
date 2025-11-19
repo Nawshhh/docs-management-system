@@ -70,35 +70,36 @@ async def create_document(
         print("Error creating document:", e)
         return fail("Could not create document")
 
-@router.put("/", response_model=ApiEnvelope)
-async def create_document(
-    body: DocCreateBody,
+@router.patch("/{doc_id}", response_model=ApiEnvelope)
+async def update_document(
+    doc_id: str,
+    body: DocUpdateBody,  # make a schema with optional fields if you like
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
-    """
-    Public: caller must provide user_id (owner) explicitly in the body.
-    """
     try:
-        payload = DocumentCreate(
-            title=body.title,
-            description=body.description,
-            attachments=[],
-        )
-        doc = await docs_repo.create_document(db, body.user_id, payload)
+        # You can make a payload model or just pass the fields directly
+        update_payload = {
+            "title": body.title,
+            "description": body.description,
+        }
+
+        doc = await docs_repo.update_document(db, doc_id, update_payload)
+        if not doc:
+            return fail("Document not found")
 
         await logs_repo.log_event(
             db,
             body.user_id or "000000000000000000000000",
-            "DOC_CREATE",
+            "DOC_UPDATE",
             "DOCUMENT",
             doc.id,
             {"title": doc.title},
         )
         return ok(doc)
-    except Exception as e:
-        print("Error creating document:", e)
-        return fail("Could not create document")
 
+    except Exception as e:
+        print("Error updating document:", e)
+        return fail("Could not update document")
 
 
 @router.get("/mine", response_model=ApiEnvelope)
