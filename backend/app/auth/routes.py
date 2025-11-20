@@ -38,7 +38,7 @@ async def login(body: LoginBody, request: Request, db: AsyncIOMotorDatabase = De
         user_doc = await db[COLL].find_one({"email": email})
         if not user_doc:
             # you could also track attempts per IP/email here if you like
-            return fail("Invalid credentials")
+            return fail("User does not exist.")
 
         now = datetime.utcnow()
         client_ip = request.client.host if request.client else None
@@ -77,9 +77,10 @@ async def login(body: LoginBody, request: Request, db: AsyncIOMotorDatabase = De
 
             await db[COLL].update_one(
                 {"_id": user_doc["_id"]},
-                {"$set": update_doc}  # ✅ fix: don't wrap update_doc in another dict
+                {"$set": update_doc} 
             )
 
+            await logs_repo.log_event(db, user_doc.get("_id"), "USER_LOGIN_FAIL", "USER", user_doc.get("_id"), {"role": user_doc.get("role")})
             return fail("Invalid credentials")
 
         # 4) On successful login, reset attempts & lock + record last use (success)
