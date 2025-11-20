@@ -17,6 +17,8 @@ from ..deps import get_current_user
 
 from pydantic import BaseModel
 
+import re
+
 router = APIRouter()
 
 ACCESS_TTL_MIN = 15
@@ -26,25 +28,37 @@ class LoginBody(BaseModel):
     email: str
     password: str
 
-LOGIN_MAX_ATTEMPTS = 3
+LOGIN_MAX_ATTEMPTS = 4
 LOGIN_LOCK_MINUTES = 1
 COLL = "users"  # your users collection name
 
 @router.post("/login", response_model=ApiEnvelope)
 async def login(body: LoginBody, request: Request, db: AsyncIOMotorDatabase = Depends(get_db)):
     try:
-        email = body.email.lower().strip()
+        password = body.password
+        email_raw = body.email
+
+        # Email pattern REGEX
+        email_pattern = r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
+        if not re.fullmatch(email_pattern, email_raw):
+            return fail("Invalid credentials")
+
+        # Password checks equivalent to your frontend:
+        # - 7–20 chars
+        # - at least one number
+        # - at least one special char (non-alphanumeric)
+
+        email = email_raw.lower().strip()
 
         # 1) Fetch user by email
         user_doc = await db[COLL].find_one({"email": email})
         if not user_doc:
-            # you could also track attempts per IP/email here if you like
             return fail("User does not exist.")
 
         now = datetime.utcnow()
         client_ip = request.client.host if request.client else None
 
-        # Capture PREVIOUS last use before we overwrite it
+        # Capture PREVIOUS last use before overwrite it
         prev_last_use = {
             "at": user_doc.get("last_use_at"),
             "success": user_doc.get("last_use_success"),
@@ -58,10 +72,18 @@ async def login(body: LoginBody, request: Request, db: AsyncIOMotorDatabase = De
             await logs_repo.log_event(db, user_doc.get("_id"), "USER_LOCKOUT", "USER", user_doc.get("_id"), {"role": user_doc.get("role")})
             return fail(f"Too many login attempts. Try again in {remaining} seconds.")
 
-        # 3) Verify password
-        stored_hash = user_doc.get("password_hash")
-        if not stored_hash or not bcrypt.checkpw(body.password.encode(), stored_hash.encode()):
-            # Wrong password → increment attempts + record last use (failed)
+        password = body.password
+
+        def needs_format_fail() -> bool:
+            if not (7 <= len(password) <= 20):
+                return True
+            if not any(ch.isdigit() for ch in password):
+                return True
+            if not re.search(r"[^A-Za-z0-9]", password):
+                return True
+            return False
+
+        if needs_format_fail():
             current_attempts = user_doc.get("login_attempts", 0) + 1
 
             update_doc = {
@@ -71,19 +93,57 @@ async def login(body: LoginBody, request: Request, db: AsyncIOMotorDatabase = De
                 "last_use_ip": client_ip,
             }
 
-            # If 3 or more failures, lock for 1 minute
             if current_attempts >= LOGIN_MAX_ATTEMPTS:
                 update_doc["login_lock_until"] = now + timedelta(minutes=LOGIN_LOCK_MINUTES)
-                # optionally reset attempts back to 0 once locked
                 update_doc["login_attempts"] = 0
 
             await db[COLL].update_one(
                 {"_id": user_doc["_id"]},
-                {"$set": update_doc} 
+                {"$set": update_doc},
             )
 
-            await logs_repo.log_event(db, user_doc.get("_id"), "USER_LOGIN_FAIL", "USER", user_doc.get("_id"), {"role": user_doc.get("role")})
+            await logs_repo.log_event(
+                db,
+                user_doc.get("_id"),
+                "USER_LOGIN_FAIL",
+                "USER",
+                user_doc.get("_id"),
+                {"role": user_doc.get("role"), "reason": "password_format"},
+            )
+
             return fail("Invalid credentials")
+
+        # 3) Verify password (hash)
+        stored_hash = user_doc.get("password_hash")
+        if not stored_hash or not bcrypt.checkpw(password.encode(), stored_hash.encode()):
+            current_attempts = user_doc.get("login_attempts", 0) + 1
+
+            update_doc = {
+                "login_attempts": current_attempts,
+                "last_use_at": now,
+                "last_use_success": False,
+                "last_use_ip": client_ip,
+            }
+
+            if current_attempts >= LOGIN_MAX_ATTEMPTS:
+                update_doc["login_lock_until"] = now + timedelta(minutes=LOGIN_LOCK_MINUTES)
+                update_doc["login_attempts"] = 0
+
+            await db[COLL].update_one(
+                {"_id": user_doc["_id"]},
+                {"$set": update_doc},
+            )
+
+            await logs_repo.log_event(
+                db,
+                user_doc.get("_id"),
+                "USER_LOGIN_FAIL",
+                "USER",
+                user_doc.get("_id"),
+                {"role": user_doc.get("role"), "reason": "bad_hash"},
+            )
+
+            return fail("Invalid credentials")       
 
         # 4) On successful login, reset attempts & lock + record last use (success)
         update_doc = {
@@ -105,8 +165,6 @@ async def login(body: LoginBody, request: Request, db: AsyncIOMotorDatabase = De
         role = user_doc.get("role")
         email = user_doc.get("email")
 
-        # If role is stored as a string, just use it;
-        # if you still have an Enum Role, you can map it.
         role_value = role.value if hasattr(role, "value") else role
 
         # 5) Create tokens

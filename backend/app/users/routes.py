@@ -15,6 +15,7 @@ from bson import ObjectId
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Any
 
+import re
 
 router = APIRouter()
 
@@ -221,14 +222,39 @@ async def create_employee(
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     try:
+        # 1) Email format
+        email_pattern = r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
+        if not re.fullmatch(email_pattern, body.email):
+            return fail("Invalid input")
+        
+        password = body.password
+
+        if not (7 <= len(password) <= 20):
+            return fail("Invalid input")
+        if not any(ch.isdigit() for ch in password):
+            return fail("Invalid input")
+        if not re.search(r"[^A-Za-z0-9]", password):
+            return fail("Invalid input")
+
+        first_name = body.first_name or ""
+        last_name = body.last_name or ""
+        security_answer = body.security_answer or ""
+
+        if len(first_name) == 0 or len(first_name) > 15:
+            return fail("Invalid input")
+        if len(last_name) == 0 or len(last_name) > 15:
+            return fail("Invalid input")
+        if len(security_answer) == 0 or len(security_answer) > 15:
+            return fail("Invalid input")
+
         payload = UserCreate(
             email=body.email,
             password=body.password,
-            profile={"first_name": body.first_name, "last_name": body.last_name},
-            security_answer=body.security_answer,
+            profile={"first_name": first_name, "last_name": last_name},
+            security_answer=security_answer,
             reset_attempts=0,
             reset_lock_until=None,
-            manager_id=body.manager_id,  
+            manager_id=body.manager_id,
         )
 
         user = await users_repo.create_user(db, payload)
@@ -243,8 +269,12 @@ async def create_employee(
         )
 
         return ok(user)
+
     except DuplicateKeyError:
         return fail("Email/User already exists")
+    except Exception as e:
+        print("Error creating employee:", e)
+        return fail("Could not create employee")
 
 
 def serialize_user(user):

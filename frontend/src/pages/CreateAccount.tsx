@@ -6,6 +6,9 @@ import toast from 'react-hot-toast';
 
 
 function CreateAccount() {
+
+  const maxLen = 20;
+
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -33,10 +36,13 @@ function CreateAccount() {
 
   // all required fields filled
   const areRequiredFieldsFilled =
-    formData.first_name.trim() &&
-    formData.last_name.trim() &&
-    formData.email.trim() &&
-    formData.secuirty_answer.trim();
+    formData.first_name.trim().length > 0 &&
+    formData.first_name.trim().length <= maxLen &&
+    formData.last_name.trim().length > 0 &&
+    formData.last_name.trim().length <= maxLen &&
+    formData.email.trim().length > 0 &&
+    formData.secuirty_answer.trim().length > 0 &&
+    formData.secuirty_answer.trim().length <= maxLen;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
@@ -66,6 +72,15 @@ function CreateAccount() {
           background: "#393939",
           color: "#FFFFFF",
         },
+      });
+      return;
+    }
+
+    if (formData.first_name.length > maxLen ||
+        formData.last_name.length > maxLen ||
+        formData.secuirty_answer.length > maxLen) {
+      toast.error("First name, last name, and nickname must be at most 15 characters.", {
+        style: { background: "#393939", color: "#FFFFFF" },
       });
       return;
     }

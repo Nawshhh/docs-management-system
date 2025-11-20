@@ -1,4 +1,3 @@
-import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster } from 'react-hot-toast';
@@ -25,30 +24,174 @@ import AddDocument from './pages/AddDocument';
 import EditDocument from './pages/EditDocument';
 import DeleteDocumentsEmployee from './pages/DeleteDocumentsEmployee';
 
-createRoot(document.getElementById('root')!).render(
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Login/>}/>
-        <Route path="/admin-homepage" element={<AdminHomepage/>}/>
-        <Route path="/employee-homepage" element={<EmployeeHomepage/>}/>
-        <Route path="/manager-homepage" element={<ManagerHomepage/>}/>
-        <Route path="/accounts" element={<Accounts/>}/>
-        <Route path="/create-account" element={<CreateAccount/>}/>
-        <Route path="/roles" element={<Roles/>}/>
-        <Route path="/system-logs" element={<Logs/>}/>
-        <Route path="/documents" element={<Documents/>}/>
-        <Route path="/forgot-password" element={<ForgotPassword/>}></Route>
-        <Route path="/view-scope" element={<ViewEmployeePage/>}></Route>
-        <Route path="/assign-scope" element={<AssignScope/>}></Route>
-        <Route path="/view-documents" element={<ViewDocuments/>}></Route>
-        <Route path="/approve-documents" element={<ApproveDocuments/>}></Route> 
-        <Route path="/delete-documents" element={<DeleteDocuments/>}></Route>      
-        <Route path="/reject-documents" element={<RejectDocuments/>}></Route> 
-        <Route path="/view-my-documents" element={<ViewEmployeeDocuments/>}></Route> 
-        <Route path="/add-document" element={<AddDocument/>}></Route> 
-        <Route path="/edit-document" element={<EditDocument/>}></Route> 
-        <Route path="/delete-document" element={<DeleteDocumentsEmployee/>}></Route> 
-      </Routes>
-      <Toaster position="bottom-right" reverseOrder={true}/>
-    </BrowserRouter>
+import { RequireRole } from "./auth/RequireRole";
+
+createRoot(document.getElementById("root")!).render(
+  <BrowserRouter>
+    <Routes>
+      {/* Public Pages */}
+      <Route path="/" element={<Login />} />
+      <Route path="/create-account" element={<CreateAccount />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+
+      {/* Admin Pages */}
+      <Route
+        path="/admin-homepage"
+        element={
+          <RequireRole allowedRoles={["ADMIN"]} pageLabel="ADMIN">
+            <AdminHomepage />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="/accounts"
+        element={
+          <RequireRole allowedRoles={["ADMIN"]} pageLabel="ADMIN">
+            <Accounts />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="/roles"
+        element={
+          <RequireRole allowedRoles={["ADMIN"]} pageLabel="ADMIN">
+            <Roles />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="/system-logs"
+        element={
+          <RequireRole allowedRoles={["ADMIN"]} pageLabel="ADMIN">
+            <Logs />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="/assign-scope"
+        element={
+          <RequireRole allowedRoles={["ADMIN"]} pageLabel="ADMIN">
+            <AssignScope />
+          </RequireRole>
+        }
+      />
+
+      {/* Manager Pages */}
+      <Route
+        path="/manager-homepage"
+        element={
+          <RequireRole allowedRoles={["MANAGER"]} pageLabel="MANAGER">
+            <ManagerHomepage />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="/documents"
+        element={
+          <RequireRole allowedRoles={["MANAGER"]} pageLabel="MANAGER">
+            <Documents />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="/view-scope"
+        element={
+          <RequireRole allowedRoles={["MANAGER"]} pageLabel="MANAGER">
+            <ViewEmployeePage />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="/view-documents"
+        element={
+          <RequireRole allowedRoles={["MANAGER"]} pageLabel="MANAGER">
+            <ViewDocuments />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="/approve-documents"
+        element={
+          <RequireRole allowedRoles={["MANAGER"]} pageLabel="MANAGER">
+            <ApproveDocuments />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="/delete-documents"
+        element={
+          <RequireRole allowedRoles={["MANAGER"]} pageLabel="MANAGER">
+            <DeleteDocuments />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="/reject-documents"
+        element={
+          <RequireRole allowedRoles={["MANAGER"]} pageLabel="MANAGER">
+            <RejectDocuments />
+          </RequireRole>
+        }
+      />
+
+      {/* Employee Pages */}
+      <Route
+        path="/employee-homepage"
+        element={
+          <RequireRole
+            allowedRoles={["EMPLOYEE"]}
+            pageLabel="EMPLOYEE"
+          >
+            <EmployeeHomepage />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="/view-my-documents"
+        element={
+          <RequireRole
+            allowedRoles={["EMPLOYEE"]}
+            pageLabel="EMPLOYEE"
+          >
+            <ViewEmployeeDocuments />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="/add-document"
+        element={
+          <RequireRole
+            allowedRoles={["EMPLOYEE"]}
+            pageLabel="EMPLOYEE"
+          >
+            <AddDocument />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="/edit-document"
+        element={
+          <RequireRole
+            allowedRoles={["EMPLOYEE"]}
+            pageLabel="EMPLOYEE"
+          >
+            <EditDocument />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="/delete-document"
+        element={
+          <RequireRole
+            allowedRoles={["EMPLOYEE"]}
+            pageLabel="EMPLOYEE"
+          >
+            <DeleteDocumentsEmployee />
+          </RequireRole>
+        }
+      />
+    </Routes>
+
+    <Toaster position="bottom-right" reverseOrder={true} />
+  </BrowserRouter>
 );
