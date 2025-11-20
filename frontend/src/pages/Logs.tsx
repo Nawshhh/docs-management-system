@@ -27,6 +27,7 @@ function Logs() {
       const { ok, data, error } = res.data;
 
       if (!ok || !data) {
+        await axios.post("http://localhost:8000/auth/page-breach", { page: "ADMIN" });
         toast.error(error || "Unable to verify permissions.", {
           style: {
             background: "#393939",
@@ -40,6 +41,7 @@ function Logs() {
       const userData = data;
 
       if (userData.role !== "ADMIN") {
+        await axios.post("http://localhost:8000/auth/page-breach", { page: "ADMIN" });
         toast.error("Access denied. Admins only.", {
           style: {
             background: "#393939",
@@ -65,7 +67,7 @@ function Logs() {
 
   return (
     <div className='w-screen h-screen flex flex-col items-center justify-center bg-zinc-900 px-20 md:px-80 sm:px-10'>
-        <p className='font-semibold text-3xl text-gray-200 mb-10'>Audit Logs</p>
+        <p className='font-semibold text-3xl text-gray-200 mb-10'>System Logs</p>
         <LogsTable />
         <button 
             onClick={handleHome}

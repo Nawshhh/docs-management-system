@@ -21,11 +21,10 @@ function AdminHomepage() {
         withCredentials: true,
       });
 
-       
-
       const { ok, data, error } = res.data;
 
       if (!ok || !data) {
+        await axios.post("http://localhost:8000/auth/page-breach", { page: "ADMIN" });
         toast.error(error || "Unable to verify permissions.", {
           style: {
             background: "#393939",
@@ -34,27 +33,28 @@ function AdminHomepage() {
         });
         navigate("/");
         return;
+      } else {
+        const userData = data;
+
+        if (userData.role !== "ADMIN") {
+          await axios.post("http://localhost:8000/auth/page-breach", { page: "ADMIN" });
+          toast.error("Access denied. Admins only.", {
+            style: {
+              background: "#393939",
+              color: "#FFFFFF",
+            },
+          });
+          navigate("/");
+          return;
+        }
+
+        setUser(userData);
+        setFirstName(userData.profile?.first_name || "Admin");
+        setLastName(userData.profile?.last_name || "");
       }
-
-      const userData = data;
-
-      if (userData.role !== "ADMIN") {
-        toast.error("Access denied. Admins only.", {
-          style: {
-            background: "#393939",
-            color: "#FFFFFF",
-          },
-        });
-        navigate("/");
-        return;
-      }
-
-      setUser(userData);
-      setFirstName(userData.profile?.first_name || "Admin");
-      setLastName(userData.profile?.last_name || "");
     } catch (error: any) {
       console.error("User info failed:", error.response?.data || error.message);
-
+      await axios.post("http://localhost:8000/auth/page-breach", { page: "ADMIN" });
       toast.error("Unable to verify permissions.", {
         style: {
           background: "#393939",

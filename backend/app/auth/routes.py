@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Header, Request
+from fastapi import APIRouter, Depends, Header, Request, Response
 from fastapi.encoders import jsonable_encoder
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from fastapi.responses import JSONResponse
@@ -10,9 +10,10 @@ from ..db import get_db
 from ..config import settings
 from ..api import ok, fail, ApiEnvelope
 from ..repos import users as users_repo
-from ..models import UserOut, Role
+from ..models import UserOut, Role, UserDB
 from .jwt import make_token, verify_token
 from ..repos import audit_logs as logs_repo
+from ..deps import get_current_user
 
 from pydantic import BaseModel
 
@@ -164,8 +165,8 @@ async def login(body: LoginBody, request: Request, db: AsyncIOMotorDatabase = De
 class AccessBody(BaseModel):
     page: str
 
-@router.post("/admin-breach", response_model=ApiEnvelope)
-async def admin_beach_log(
+@router.post("/page-breach", response_model=ApiEnvelope)
+async def page_breach_log(
     body: AccessBody,
     request: Request,
     db: AsyncIOMotorDatabase = Depends(get_db),
@@ -185,9 +186,18 @@ async def admin_beach_log(
                 db,
                 actor_id="000000000000000000000000",
                 action="FAILED_MANAGER_PAGE_ACCESS",
-                resource_type="USER",
+                resource_type="AUTH",
                 resource_id=None,                     #  also None
                 details={"page": "MANAGER", "status": "UNKNOWN"},
+            )
+        else:
+            await logs_repo.log_event(
+                db,
+                actor_id="000000000000000000000000",
+                action="FAILED_EMPLOYEE_PAGE_ACCESS",
+                resource_type="AUTH",
+                resource_id=None,                     #  also None
+                details={"page": "EMPLOYEE", "status": "UNKNOWN"},
             )
 
         return ok()
@@ -247,7 +257,7 @@ async def me(
             token = request.cookies.get("access_token")
 
         if not token:
-            return fail("Missing token (no header or cookie)")
+            return fail("You need to log-in.")
 
         decoded = verify_token(token, secret=settings.JWT_SECRET)
         uid = decoded.get("sub")
@@ -264,20 +274,31 @@ async def me(
     except Exception:
         return fail("Could not fetch profile")
     
-@router.post("/logout")
-async def logout():
+@router.post("/logout", response_model=ApiEnvelope)
+async def logout(
+    response: Response,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+    current_user: UserDB = Depends(get_current_user),
+):
     try:
-        response = JSONResponse(content={"ok": True, "message": "Logged out successfully"})
-        # delete refresh token cookie if it exists
-        response.delete_cookie(
-            key="access_token",
-            samesite="lax",
-            secure=False,  # True in production
+        response.delete_cookie("access_token", samesite="lax", secure=False)
+        response.delete_cookie("refresh_token", samesite="lax", secure=False)
+
+        print("Current User: ", current_user.id)
+        print("Current Role: ", current_user.role)
+
+
+        await logs_repo.log_event(
+            db,
+            actor_id=str(current_user.id),
+            action="USER_LOGOUT",
+            resource_type="USER",
+            resource_id=str(current_user.id),
+            details={"role": str(current_user.role)},
         )
-        return response
+
+        return ok({"message": "Logged out successfully"})
     except Exception as e:
         print("Logout error:", e)
-        return JSONResponse(
-            content={"ok": False, "error": "Logout failed"},
-            status_code=500
-        )
+        return fail("Logout failed")
+

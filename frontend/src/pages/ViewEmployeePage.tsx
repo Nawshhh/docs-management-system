@@ -37,6 +37,7 @@ function ViewEmployeePage() {
         const { ok, data, error } = res.data;
 
         if (!ok || !data) {
+            await axios.post("http://localhost:8000/auth/page-breach", { page: "MANAGER" });
             toast.error(error || "Unable to verify permissions.", {
             style: {
                 background: "#393939",
@@ -50,6 +51,7 @@ function ViewEmployeePage() {
         const userData = data;
 
         if (userData.role !== "MANAGER") {
+            await axios.post("http://localhost:8000/auth/page-breach", { page: "MANAGER" });
             toast.error("Access denied. Managers only.", {
             style: {
                 background: "#393939",

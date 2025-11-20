@@ -26,7 +26,6 @@ import EditDocument from './pages/EditDocument';
 import DeleteDocumentsEmployee from './pages/DeleteDocumentsEmployee';
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Login/>}/>
@@ -52,5 +51,4 @@ createRoot(document.getElementById('root')!).render(
       </Routes>
       <Toaster position="bottom-right" reverseOrder={true}/>
     </BrowserRouter>
-  </StrictMode>
 );

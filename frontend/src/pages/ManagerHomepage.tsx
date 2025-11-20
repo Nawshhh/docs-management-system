@@ -35,11 +35,10 @@ function ManagerHomepage() {
             withCredentials: true,
         });
 
-         
-
         const { ok, data, error } = res.data;
 
         if (!ok || !data) {
+            await axios.post("http://localhost:8000/auth/page-breach", { page: "MANAGER" });
             toast.error(error || "Unable to verify permissions.", {
             style: {
                 background: "#393939",
@@ -53,6 +52,7 @@ function ManagerHomepage() {
         const userData = data;
 
         if (userData.role !== "MANAGER") {
+            await axios.post("http://localhost:8000/auth/page-breach", { page: "MANAGER" });
             toast.error("Access denied. Manager only.", {
             style: {
                 background: "#393939",

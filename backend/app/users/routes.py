@@ -13,7 +13,7 @@ from ..api import ok, fail, ApiEnvelope
 
 from bson import ObjectId
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Optional, Any
 
 
 router = APIRouter()
@@ -94,25 +94,35 @@ async def get_manager_employees(
         return fail("Could not fetch employees for manager")
 
 
+def stringify_object_ids(obj: Any) -> Any:
+    if isinstance(obj, ObjectId):
+        return str(obj)
+    if isinstance(obj, dict):
+        return {k: stringify_object_ids(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [stringify_object_ids(v) for v in obj]
+    return obj
 
 @router.get("/get-managers", response_model=ApiEnvelope)
 async def get_managers(
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     try:
-        cursor = db["users"].find({"role": "MANAGER"})  # or Role.MANAGER.value if using Enum
+        cursor = db["users"].find({"role": "MANAGER"})
 
         managers = []
         async for doc in cursor:
-            # normalize _id -> id as string
-            doc["_id"] = str(doc["_id"])
-            #  emove internal fields to avoid exposure
+            # remove sensitive stuff first
             doc.pop("password_hash", None)
-            managers.append(doc)
-        return ok(managers) 
+            # normalize all ObjectIds to strings
+            clean_doc = stringify_object_ids(doc)
+            managers.append(clean_doc)
+
+        return ok(managers)
     except Exception as e:
         print("Error listing managers:", e)
         return fail("Could not fetch managers")
+
     
 @router.get("/get-employees", response_model=ApiEnvelope)
 async def get_employees(

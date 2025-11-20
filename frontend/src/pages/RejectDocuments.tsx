@@ -56,6 +56,7 @@ function RejectDocuments() {
         setManagerId(data.id);
 
         if (!ok || !data) {
+          await axios.post("http://localhost:8000/auth/page-breach", { page: "MANAGER" });
             toast.error(error || "Unable to verify permissions.", {
             style: {
                 background: "#393939",
@@ -69,6 +70,7 @@ function RejectDocuments() {
         const userData = data;
 
         if (userData.role !== "MANAGER") {
+          await axios.post("http://localhost:8000/auth/page-breach", { page: "MANAGER" });
             toast.error("Access denied. Managers only.", {
             style: {
                 background: "#393939",

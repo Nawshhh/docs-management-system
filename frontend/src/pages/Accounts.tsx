@@ -27,6 +27,7 @@ function Accounts() {
       const { ok, data, error } = res.data;
 
       if (!ok || !data) {
+        await axios.post("http://localhost:8000/auth/page-breach", { page: "ADMIN" });
         toast.error(error || "Unable to verify permissions.", {
           style: {
             background: "#393939",
@@ -40,6 +41,7 @@ function Accounts() {
       const userData = data;
 
       if (userData.role !== "ADMIN") {
+        await axios.post("http://localhost:8000/auth/page-breach", { page: "ADMIN" });
         toast.error("Access denied. Admins only.", {
           style: {
             background: "#393939",

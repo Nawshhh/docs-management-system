@@ -40,7 +40,7 @@ async def list_audit_logs(
             token = request.cookies.get("access_token")
 
         if not token:
-            return fail("Missing token (no header or cookie)")
+            return fail("You are not authorized")
 
         decoded = verify_token(token, secret=settings.JWT_SECRET)
         role = decoded.get("role")
@@ -65,5 +65,4 @@ async def list_audit_logs(
     except Exception as e:
         print(f"Error listing logs: {e}")
         return fail("Could not fetch audit logs")
-    
     
