@@ -65,3 +65,5 @@ async def list_audit_logs(
     except Exception as e:
         print(f"Error listing logs: {e}")
         return fail("Could not fetch audit logs")
+    
+    

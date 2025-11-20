@@ -54,6 +54,7 @@ async def login(body: LoginBody, request: Request, db: AsyncIOMotorDatabase = De
         login_lock_until = user_doc.get("login_lock_until")
         if login_lock_until and login_lock_until > now:
             remaining = int((login_lock_until - now).total_seconds())
+            await logs_repo.log_event(db, user_doc.get("_id"), "USER_LOCKOUT", "USER", user_doc.get("_id"), {"role": user_doc.get("role")})
             return fail(f"Too many login attempts. Try again in {remaining} seconds.")
 
         # 3) Verify password
@@ -160,6 +161,41 @@ async def login(body: LoginBody, request: Request, db: AsyncIOMotorDatabase = De
         import traceback; traceback.print_exc()
         return fail("Could not login")
 
+class AccessBody(BaseModel):
+    page: str
+
+@router.post("/admin-breach", response_model=ApiEnvelope)
+async def admin_beach_log(
+    body: AccessBody,
+    request: Request,
+    db: AsyncIOMotorDatabase = Depends(get_db),
+):
+    try:
+        if body.page == "ADMIN":
+            await logs_repo.log_event(
+                db,
+                actor_id="000000000000000000000000",   # system
+                action="FAILED_ADMIN_PAGE_ACCESS",
+                resource_type="AUTH",
+                resource_id=None,                     #  no ObjectId here
+                details={"page": "ADMIN", "status": "UNKNOWN"},
+            )
+        elif body.page == "MANAGER":
+            await logs_repo.log_event(
+                db,
+                actor_id="000000000000000000000000",
+                action="FAILED_MANAGER_PAGE_ACCESS",
+                resource_type="USER",
+                resource_id=None,                     #  also None
+                details={"page": "MANAGER", "status": "UNKNOWN"},
+            )
+
+        return ok()
+    except Exception as e:
+        print("Error logging breach:", e)
+        return fail("Failed auth")
+
+
 
 class RefreshBody(BaseModel):
     refresh: str
@@ -234,7 +270,7 @@ async def logout():
         response = JSONResponse(content={"ok": True, "message": "Logged out successfully"})
         # delete refresh token cookie if it exists
         response.delete_cookie(
-            key="refresh_token",
+            key="access_token",
             samesite="lax",
             secure=False,  # True in production
         )

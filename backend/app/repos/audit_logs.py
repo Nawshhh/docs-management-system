@@ -27,21 +27,39 @@ async def ensure_indexes(db: AsyncIOMotorDatabase):
     await db[COLL].create_index("action")
     await db[COLL].create_index("resource_type")
 
-async def log_event(db: AsyncIOMotorDatabase, actor_id: str, action: str, resource_type: str, resource_id: str | None = None, details: dict | None = None) -> AuditLogOut:
+async def log_event(
+    db: AsyncIOMotorDatabase,
+    actor_id: str,
+    action: str,
+    resource_type: str,
+    resource_id: str | None = None,
+    details: dict | None = None,
+) -> AuditLogOut:
     now = datetime.now(timezone.utc)
 
     if actor_id is None:
         actor_id = "000000000000000000000000"  # system actor
+
+    # normalize details into a dict
+    normalized_details: dict[str, Any]
+    if details is None:
+        normalized_details = {}
+    elif isinstance(details, dict):
+        normalized_details = details
+    else:
+        # in case someone passes a string or other type
+        normalized_details = {"raw": details}
 
     doc = {
         "actor_id": to_obj_id(actor_id),
         "action": action,
         "resource_type": resource_type,
         "resource_id": to_obj_id(resource_id) if resource_id else None,
-        "details": details or {},
+        "details": normalized_details,
         "created_at": now,
-        "updated_at": now
+        "updated_at": now,
     }
+
     res = await db[COLL].insert_one(doc)
     doc["_id"] = res.inserted_id
     return _doc_to_out(doc)
