@@ -1,7 +1,7 @@
 # backend/app/repos/audit_logs.py
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Optional, Any
 
 from ..models import AuditLogDB, AuditLogOut
 from .utils import to_obj_id

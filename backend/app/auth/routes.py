@@ -134,6 +134,8 @@ async def login(body: LoginBody, request: Request, db: AsyncIOMotorDatabase = De
                 {"$set": update_doc},
             )
 
+            user = await users_repo.find_by_email(db, body.email)
+
             await logs_repo.log_event(
                 db,
                 user_doc.get("_id"),

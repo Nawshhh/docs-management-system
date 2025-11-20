@@ -43,7 +43,7 @@ export function RequireRole({ allowedRoles, pageLabel, children }: RequireRolePr
           toast.error(error || "Unable to verify permissions.", {
             style: { background: "#393939", color: "#FFFFFF" },
           });
-          navigate("/");
+          navigate("/error-page");
           return;
         }
 
@@ -53,7 +53,7 @@ export function RequireRole({ allowedRoles, pageLabel, children }: RequireRolePr
           toast.error("Access denied.", {
             style: { background: "#393939", color: "#FFFFFF" },
           });
-          navigate("/");
+          navigate("/error-page");
           return;
         }
 
@@ -64,7 +64,7 @@ export function RequireRole({ allowedRoles, pageLabel, children }: RequireRolePr
         toast.error("Unable to verify permissions.", {
           style: { background: "#393939", color: "#FFFFFF" },
         });
-        navigate("/");
+        navigate("/error-page");
       } finally {
         setLoading(false);
       }

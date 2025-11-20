@@ -23,6 +23,7 @@ import ViewEmployeeDocuments from './pages/ViewEmployeeDocuments';
 import AddDocument from './pages/AddDocument';
 import EditDocument from './pages/EditDocument';
 import DeleteDocumentsEmployee from './pages/DeleteDocumentsEmployee';
+import ErrorPage from './pages/ErrorPage';
 
 import { RequireRole } from "./auth/RequireRole";
 
@@ -33,6 +34,7 @@ createRoot(document.getElementById("root")!).render(
       <Route path="/" element={<Login />} />
       <Route path="/create-account" element={<CreateAccount />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/error-page" element={<ErrorPage />} />
 
       {/* Admin Pages */}
       <Route

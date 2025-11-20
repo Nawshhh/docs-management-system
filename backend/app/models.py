@@ -36,6 +36,8 @@ class AuditAction(str, Enum):
     DOC_SUBMIT = "DOC_SUBMIT"
     DOC_APPROVE = "DOC_APPROVE"
     DOC_REJECT = "DOC_REJECT"
+    LOGIN_INPUT_ERROR = "LOGIN_INPUT_ERROR"
+    DOCUMENT_INPUT_ERROR = "DOCUMENT_INPUT_ERROR"
 
 
 class ResourceType(str, Enum):

@@ -30,8 +30,9 @@ function EditDocument() {
     const [description, setDescription] = useState("");
     const [submitting, setSubmitting] = useState(false);
 
-    const employeeId = localStorage.getItem("my_id");
+    const [employeeId, setEmployeeId] = useState<string | null>(null);
 
+  
     const handleBack = () => {
         navigate("/employee-homepage");
     };
@@ -44,8 +45,7 @@ function EditDocument() {
     };
 
     // Fetch all documents for this employee
-    useEffect(() => {
-        const fetchDocs = async () => {
+      const fetchDocs = async () => {
         if (!employeeId) {
             toast.error("No employee ID found. Please log in again.", {
             style: { background: "#393939", color: "#FFFFFF" },
@@ -72,13 +72,17 @@ function EditDocument() {
         } finally {
             setLoading(false);
         }
-        };
+      };
 
-        fetchDocs();
-    }, [employeeId, navigate]);
+    // useEffect(() => {
+    //     fetchDocs();
+    // },[employeeId])
 
     useEffect(() => {
         fetchUserInfo();
+        if (employeeId) {
+          fetchDocs();
+        }
     }, []);
 
     const fetchUserInfo = async () => {
@@ -86,8 +90,6 @@ function EditDocument() {
             const res = await axios.get("http://localhost:8000/auth/me", {
                 withCredentials: true,
             });
-
-             
 
             const { ok, data, error } = res.data;
 
@@ -116,6 +118,10 @@ function EditDocument() {
                 navigate("/");
                 return;
             }
+
+            console.log("emp id: ",userData.id);
+
+            setEmployeeId(userData.id)
         } catch (error: any) {
             console.error("User info failed:", error.response?.data || error.message);
 
@@ -235,7 +241,7 @@ function EditDocument() {
       </div>
 
       <div className="w-full max-w-4xl bg-zinc-800 rounded-lg shadow-lg p-6 mb-6">
-        {loading ? (
+        {Document.length != 0 ? (
           <div className="text-gray-200 text-sm">Loading documents...</div>
         ) : documents.length === 0 ? (
           <div className="text-gray-400 text-sm">
