@@ -260,8 +260,11 @@ async def list_docs_in_scope(
     (any status) for employees whose manager_id == body.manager_id.
     """
     try:
+        print("Listing docs in scope for manager:", body.manager_id)
         manager_id = body.manager_id
         manager_obj_id = ObjectId(manager_id)
+
+        print("Manager ObjectId:", manager_obj_id)
 
         cursor = db["users"].find(
             {

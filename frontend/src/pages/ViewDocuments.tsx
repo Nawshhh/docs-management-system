@@ -29,7 +29,9 @@ function ViewDocuments() {
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const managerId = localStorage.getItem("my_id");
+  const [managerId, setManagerId] = useState<string | null>(null);
+
+  // const managerId = localStorage.getItem("my_id");
 
   const handleBack = () => {
     navigate("/documents");
@@ -52,9 +54,9 @@ function ViewDocuments() {
     setIsModalOpen(false);
   };
 
-  useEffect(() => {
     const fetchDocuments = async () => {
       try {
+        console.log("Fetching documents for manager ID:", managerId);
         const res = await axios.post(
         "http://localhost:8000/documents/view-docs",
         { manager_id: managerId }
@@ -75,11 +77,14 @@ function ViewDocuments() {
       }
     };
 
-    fetchDocuments();
-  }, [managerId]);
-
     useEffect(() => {
-        fetchUserInfo();
+      fetchUserInfo();
+
+      if (managerId){
+        fetchDocuments();
+      } else {
+            setLoading(false);
+        }
     }, []);
 
     const fetchUserInfo = async () => {
@@ -88,9 +93,9 @@ function ViewDocuments() {
             withCredentials: true,
         });
 
-        console.log("Fetched user data:", res.data);
-
         const { ok, data, error } = res.data;
+
+        setManagerId(data.id);
 
         if (!ok || !data) {
             toast.error(error || "Unable to verify permissions.", {

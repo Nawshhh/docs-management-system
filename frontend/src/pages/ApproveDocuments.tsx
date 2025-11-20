@@ -13,14 +13,21 @@ type Document = {
 
 function ApproveDocuments() {
     const navigate = useNavigate();
-    const managerId = localStorage.getItem("my_id");
 
     const [documents, setDocuments] = useState<Document[]>([]);
     const [loading, setLoading] = useState(true);
     const [approvingId, setApprovingId] = useState<string | null>(null);
 
+    const [managerId, setManagerId] = useState<string | null>(null);
+
     useEffect(() => {
         fetchUserInfo();
+
+        if (managerId){
+            fetchDocuments();
+        } else {
+            setLoading(false);
+        }
     }, []);
 
     const fetchUserInfo = async () => {
@@ -29,9 +36,11 @@ function ApproveDocuments() {
             withCredentials: true,
         });
 
-        console.log("Fetched user data:", res.data);
+         
 
         const { ok, data, error } = res.data;
+
+        setManagerId(data.id);
 
         if (!ok || !data) {
             toast.error(error || "Unable to verify permissions.", {
@@ -74,39 +83,36 @@ function ApproveDocuments() {
         navigate("/documents");
     };
 
-    useEffect(() => {
-        const fetchDocuments = async () => {
-        if (!managerId) {
-            toast.error("No manager ID found.", {
-            style: { background: "#393939", color: "#FFFFFF" },
-            });
-            setLoading(false);
-            return;
-        }
+    const fetchDocuments = async () => {
+    if (!managerId) {
+        toast.error("No manager ID found.", {
+        style: { background: "#393939", color: "#FFFFFF" },
+        });
+        setLoading(false);
+        return;
+    }
 
-        try {
-            const res = await axios.post(
-            "http://localhost:8000/documents/view-docs/pending",
-            { manager_id: managerId }
-            );
+    try {
+        const res = await axios.post(
+        "http://localhost:8000/documents/view-docs/pending",
+        { manager_id: managerId }
+        );
 
-            const items: Document[] = res.data?.data || [];
-            setDocuments(items);
-        } catch (error: any) {
-            console.error(
-            "Error fetching documents:",
-            error.response?.data || error.message
-            );
-            toast.error("Failed to load documents.", {
-            style: { background: "#393939", color: "#FFFFFF" },
-            });
-        } finally {
-            setLoading(false);
-        }
-        };
+        const items: Document[] = res.data?.data || [];
+        setDocuments(items);
+    } catch (error: any) {
+        console.error(
+        "Error fetching documents:",
+        error.response?.data || error.message
+        );
+        toast.error("Failed to load documents.", {
+        style: { background: "#393939", color: "#FFFFFF" },
+        });
+    } finally {
+        setLoading(false);
+    }
+    };
 
-        fetchDocuments();
-    }, [managerId]);
 
     const handleApprove = async (docId?: string) => {
         if (!docId || !managerId) return;

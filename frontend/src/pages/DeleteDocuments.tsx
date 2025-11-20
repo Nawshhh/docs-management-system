@@ -29,10 +29,15 @@ function DeleteDocuments() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const managerId = localStorage.getItem("my_id");
+  const [managerId, setManagerId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchUserInfo();
+        if (managerId){
+            fetchDocuments();
+        } else {
+            setLoading(false);
+        }
     }, []);
 
     const fetchUserInfo = async () => {
@@ -41,9 +46,11 @@ function DeleteDocuments() {
             withCredentials: true,
         });
 
-        console.log("Fetched user data:", res.data);
+         
 
         const { ok, data, error } = res.data;
+
+        setManagerId(data.id);
 
         if (!ok || !data) {
             toast.error(error || "Unable to verify permissions.", {
@@ -80,6 +87,28 @@ function DeleteDocuments() {
         });
         navigate("/");
         }
+    };
+
+    const fetchDocuments = async () => {
+      try {
+        const res = await axios.post(
+          "http://localhost:8000/documents/view-docs",
+          { manager_id: managerId }
+        );
+
+        const items: Document[] = res.data?.data || [];
+        setDocuments(items);
+      } catch (error: any) {
+        console.error(
+          "Error fetching documents:",
+          error.response?.data || error.message
+        );
+        toast.error("Failed to load documents.", {
+          style: { background: "#393939", color: "#FFFFFF" },
+        });
+      } finally {
+        setLoading(false);
+      }
     };
 
   const handleBack = () => {
@@ -187,32 +216,6 @@ function DeleteDocuments() {
             }
         );
     };
-
-  useEffect(() => {
-    const fetchDocuments = async () => {
-      try {
-        const res = await axios.post(
-          "http://localhost:8000/documents/view-docs",
-          { manager_id: managerId }
-        );
-
-        const items: Document[] = res.data?.data || [];
-        setDocuments(items);
-      } catch (error: any) {
-        console.error(
-          "Error fetching documents:",
-          error.response?.data || error.message
-        );
-        toast.error("Failed to load documents.", {
-          style: { background: "#393939", color: "#FFFFFF" },
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDocuments();
-  }, [managerId]);
 
   return (
     <div className="w-screen h-screen flex flex-col items-center justify-center bg-zinc-900 px-20 md:px-80 sm:px-10">

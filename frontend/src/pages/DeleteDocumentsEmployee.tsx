@@ -30,10 +30,16 @@ const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const employeeId = localStorage.getItem("my_id");
+  const [employeeId, setEmployeeId] = useState<string | null>(null);
+
 
     useEffect(() => {
         fetchUserInfo();
+        if (employeeId){
+              fetchDocuments();
+        } else {
+            setLoading(false);
+        }
     }, []);
 
     const fetchUserInfo = async () => {
@@ -42,9 +48,9 @@ const navigate = useNavigate();
                 withCredentials: true,
             });
 
-            console.log("Fetched user data:", res.data);
-
             const { ok, data, error } = res.data;
+
+            setEmployeeId(data.id);
 
             if (!ok || !data) {
                 toast.error(error || "Unable to verify permissions.", {
@@ -188,7 +194,6 @@ const navigate = useNavigate();
         );
     };
 
-  useEffect(() => {
     const fetchDocuments = async () => {
       try {
         const res = await axios.get(
@@ -209,9 +214,6 @@ const navigate = useNavigate();
         setLoading(false);
       }
     };
-
-    fetchDocuments();
-  }, []);
 
   return (
     <div className="w-screen h-screen flex flex-col items-center justify-center bg-zinc-900 px-20 md:px-80 sm:px-10">

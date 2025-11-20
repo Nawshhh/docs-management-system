@@ -29,7 +29,7 @@ function ViewEmployeeDocuments() {
     const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const employeeId = localStorage.getItem("my_id");
+    const [employeeId, setEmployeeId] = useState<string | null>(null);
 
     const handleBack = () => {
         navigate("/employee-homepage");
@@ -58,9 +58,11 @@ function ViewEmployeeDocuments() {
                 withCredentials: true,
             });
 
-            console.log("Fetched user data:", res.data);
+             
 
             const { ok, data, error } = res.data;
+
+            setEmployeeId(data.id);
 
             if (!ok || !data) {
                 toast.error(error || "Unable to verify permissions.", {
@@ -100,7 +102,11 @@ function ViewEmployeeDocuments() {
 
     useEffect(() => {
         fetchUserInfo();
-        fetchDocuments();
+        if (employeeId) {
+          fetchDocuments();
+        } else {
+            setLoading(false);
+        }
     }, []);
 
     const fetchDocuments = async () => {

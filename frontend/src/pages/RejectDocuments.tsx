@@ -28,11 +28,19 @@ function RejectDocuments() {
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [managerId, setManagerId] = useState<string | null>(null);
 
-  const managerId = localStorage.getItem("my_id");
+
 
     useEffect(() => {
         fetchUserInfo();
+
+        if (managerId){
+            fetchDocuments();
+        } else {
+            setLoading(false);
+        }
+
     }, []);
 
     const fetchUserInfo = async () => {
@@ -41,9 +49,11 @@ function RejectDocuments() {
             withCredentials: true,
         });
 
-        console.log("Fetched user data:", res.data);
+         
 
         const { ok, data, error } = res.data;
+
+        setManagerId(data.id);
 
         if (!ok || !data) {
             toast.error(error || "Unable to verify permissions.", {
@@ -188,7 +198,6 @@ function RejectDocuments() {
         );
     };
 
-  useEffect(() => {
     const fetchDocuments = async () => {
       try {
         const res = await axios.post(
@@ -210,9 +219,6 @@ function RejectDocuments() {
         setLoading(false);
       }
     };
-
-    fetchDocuments();
-  }, [managerId]);
 
   return (
     <div className="w-screen h-screen flex flex-col items-center justify-center bg-zinc-900 px-20 md:px-80 sm:px-10">

@@ -28,7 +28,7 @@ function LogsTable() {
             withCredentials: true,
         });
 
-        console.log("Fetched user data:", res.data);
+         
 
         const { ok, data, error } = res.data;
 

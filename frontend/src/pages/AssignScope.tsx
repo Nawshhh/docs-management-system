@@ -44,7 +44,7 @@ function AssignScope() {
         withCredentials: true,
       });
 
-      console.log("Fetched user data:", res.data);
+       
 
       const { ok, data, error } = res.data;
 
@@ -208,7 +208,7 @@ function AssignScope() {
 
     {employees.length === 0 ? (
         <p className="text-gray-400 text-sm">
-        All employees are already assigned to a manager.
+        No employees.
         </p>
     ) : (
         <div className="overflow-x-auto">
