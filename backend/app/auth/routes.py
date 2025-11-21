@@ -74,16 +74,44 @@ async def login(body: LoginBody, request: Request, db: AsyncIOMotorDatabase = De
 
         password = body.password
 
-        def needs_format_fail() -> bool:
+        async def needs_format_fail() -> bool:
             if not (7 <= len(password) <= 20):
+                await logs_repo.log_event(
+                    db,
+                    actor_id=user_doc.get("_id"),
+                    action="OUT_OF_RANGE_PASS",
+                    resource_type="VALIDATION",
+                    resource_id=None,
+                    details={},
+                )
                 return True
+
             if not any(ch.isdigit() for ch in password):
+                await logs_repo.log_event(
+                    db,
+                    actor_id=user_doc.get("_id"),
+                    action="NO_DIGIT_PASS",
+                    resource_type="VALIDATION",
+                    resource_id=None,
+                    details={},
+                )
                 return True
+
             if not re.search(r"[^A-Za-z0-9]", password):
+                await logs_repo.log_event(
+                    db,
+                    actor_id=user_doc.get("_id"),
+                    action="INC_CHAR_PASS",
+                    resource_type="VALIDATION",
+                    resource_id=None,
+                    details={},
+                )
                 return True
+
             return False
 
-        if needs_format_fail():
+        
+        if await needs_format_fail():
             current_attempts = user_doc.get("login_attempts", 0) + 1
 
             update_doc = {
@@ -112,7 +140,7 @@ async def login(body: LoginBody, request: Request, db: AsyncIOMotorDatabase = De
             )
 
             return fail("Invalid credentials")
-
+        
         # 3) Verify password (hash)
         stored_hash = user_doc.get("password_hash")
         if not stored_hash or not bcrypt.checkpw(password.encode(), stored_hash.encode()):

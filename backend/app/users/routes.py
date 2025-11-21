@@ -317,6 +317,17 @@ async def find_user_by_email(
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     try:
+        email_pattern = r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
+        if not re.fullmatch(email_pattern,  body.email):
+            await logs_repo.log_event(
+                db,
+                actor_id="000000000000000000000000",
+                action="INC_CHAR_EMAIL",
+                resource_type="VALIDATION",
+                resource_id=None,
+                details={},
+            )
+
         user = await users_repo.find_by_email(db, body.email)
         if not user:
             return fail("User not found")
@@ -337,6 +348,33 @@ async def find_user_nickname(
     COLL = "users"
 
     try:
+        nickname = body.security_answer
+
+
+        email_pattern = r"^[^@\s]+@[^@\s]+\.[^@\s]+$"
+
+        if not re.fullmatch(email_pattern,  body.email):
+            await logs_repo.log_event(
+                db,
+                actor_id="000000000000000000000000",
+                action="INC_CHAR_EMAIL",
+                resource_type="VALIDATION",
+                resource_id=None,
+                details={},
+            )
+            return fail("Invalid email.")
+
+        if len(nickname) > 20:
+            await logs_repo.log_event(
+                db,
+                actor_id="000000000000000000000000",
+                action="OUT_OF_RANGE_NN",
+                resource_type="VALIDATION",
+                resource_id=None,
+                details={},
+            )
+            return fail("Invalid nickname.")
+
         # 1) Fetch user by email
         user_doc = await db[COLL].find_one(
             {"email": body.email.lower().strip()}
@@ -442,13 +480,15 @@ async def reset_user_password(
             db, body.user_id, body.new_password
         )
 
+        
+
         if not ok_flag:
             return fail(err_msg or "Password reset failed")
 
         # 4) Set last_password_change_at ONLY AFTER a successful change
         await db["users"].update_one(
             {"_id": ObjectId(body.user_id)},
-            {"$set": {"last_password_change_at": now}},
+            {"$set": {"last_password_change_at": now, "login_attempts": 0, "login_lock_until": now}},
         )
 
         return ok()
