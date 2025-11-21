@@ -40,7 +40,7 @@ const navigate = useNavigate();
         } else {
             setLoading(false);
         }
-    }, []);
+    }, [employeeId]);
 
     const fetchUserInfo = async () => {
         try {
@@ -226,7 +226,7 @@ const navigate = useNavigate();
       <div className="w-full max-w-4xl bg-zinc-800 rounded-lg shadow-lg p-6 mb-6">
         {loading ? (
           <div className="text-gray-200 text-sm">Loading documents...</div>
-        ) : documents.length === 0 ? (
+        ) : documents.length == 0 ? (
           <div className="text-gray-400 text-sm">No documents found.</div>
         ) : (
           <div className="overflow-x-auto">

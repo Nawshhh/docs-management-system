@@ -80,7 +80,7 @@ function EditDocument() {
         if (employeeId) {
           fetchDocs();
         }
-    }, []);
+    }, [employeeId]);
 
     const fetchUserInfo = async () => {
         try {
@@ -116,7 +116,7 @@ function EditDocument() {
                 return;
             }
 
-            console.log("emp id: ",userData.id);
+            // console.log("emp id: ",userData.id);
 
             setEmployeeId(userData.id)
         } catch (error: any) {
@@ -240,7 +240,7 @@ function EditDocument() {
       <div className="w-full max-w-4xl bg-zinc-800 rounded-lg shadow-lg p-6 mb-6">
         {Document.length != 0 ? (
           <div className="text-gray-200 text-sm">Loading documents...</div>
-        ) : documents.length === 0 ? (
+        ) : documents.length == 0 ? (
           <div className="text-gray-400 text-sm">
             You have no documents yet.
           </div>

@@ -58,11 +58,7 @@ function ViewEmployeeDocuments() {
                 withCredentials: true,
             });
 
-             
-
             const { ok, data, error } = res.data;
-
-            setEmployeeId(data.id);
 
             if (!ok || !data) {
               await axios.post("http://localhost:8000/auth/page-breach", { page: "EMPLOYEE" });
@@ -89,6 +85,8 @@ function ViewEmployeeDocuments() {
                 navigate("/");
                 return;
             }
+
+              setEmployeeId(userData.id);
         } catch (error: any) {
             console.error("User info failed:", error.response?.data || error.message);
 
@@ -104,12 +102,13 @@ function ViewEmployeeDocuments() {
 
     useEffect(() => {
         fetchUserInfo();
+        console.log("Employee ID: ", employeeId);
         if (employeeId) {
           fetchDocuments();
         } else {
             setLoading(false);
         }
-    }, []);
+    }, [employeeId]);
 
     const fetchDocuments = async () => {
         try {
@@ -139,7 +138,9 @@ function ViewEmployeeDocuments() {
         {loading ? (
           <div className="text-gray-200 text-sm">Loading documents...</div>
         ) : documents.length == 0 ? (
-          <div className="text-gray-400 text-sm">No documents found.</div>
+            <div className="text-gray-400 text-sm">
+            No documents found.
+            </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-left text-sm text-gray-200">
