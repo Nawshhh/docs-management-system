@@ -95,7 +95,13 @@ function CreateAccount() {
         manager_id: formData.manager_id
       });
 
-      console.log("Create user success:", res.data);
+      console.log("Create user success:", res.data.ok);
+
+      if (!res.data.ok){
+        toast.error(res.data.error || "Invalid");
+        return
+      }
+
       toast.success("Account created successfully!");
       setFormData({
         first_name: "",
