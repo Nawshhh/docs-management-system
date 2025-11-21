@@ -21,7 +21,6 @@ function EditDocument() {
     const navigate = useNavigate();
 
     const [documents, setDocuments] = useState<Document[]>([]);
-    const [loading, setLoading] = useState(true);
 
     const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -69,9 +68,7 @@ function EditDocument() {
             toast.error("Failed to load documents.", {
             style: { background: "#393939", color: "#FFFFFF" },
             });
-        } finally {
-            setLoading(false);
-        }
+        } 
       };
 
     // useEffect(() => {

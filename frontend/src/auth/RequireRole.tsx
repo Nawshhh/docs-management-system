@@ -29,7 +29,6 @@ export function RequireRole({ allowedRoles, pageLabel, children }: RequireRolePr
     }
   };
 
-  useEffect(() => {
     const checkAuth = async () => {
       try {
         const res = await axios.get("http://localhost:8000/auth/me", {
@@ -70,6 +69,7 @@ export function RequireRole({ allowedRoles, pageLabel, children }: RequireRolePr
       }
     };
 
+  useEffect(() => {
     checkAuth();
   }, [allowedRoles, navigate, pageLabel]);
 
