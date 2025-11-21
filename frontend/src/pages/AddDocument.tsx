@@ -12,6 +12,7 @@ function AddDocument() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [employeeId, setEmployeeId] = useState<string | null>(null);
 
   const TITLE_MAX = 50;
   const DESC_MAX = 100;
@@ -44,6 +45,8 @@ function AddDocument() {
              
 
             const { ok, data, error } = res.data;
+
+            setEmployeeId(data.id);
 
             if (!ok || !data) {
               await axios.post("http://localhost:8000/auth/page-breach", { page: "EMPLOYEE" });
@@ -83,64 +86,63 @@ function AddDocument() {
         }
     };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
 
-    const trimmedTitle = title.trim();
-    const trimmedDesc = description.trim();
+      const trimmedTitle = title.trim();
+      const trimmedDesc = description.trim();
 
-    if (!trimmedTitle || !trimmedDesc) {
-      toast.error("Please fill in both title and description.", {
-        style: { background: "#393939", color: "#FFFFFF" },
-      });
-      return;
-    }
+      if (!trimmedTitle || !trimmedDesc) {
+        toast.error("Please fill in both title and description.", {
+          style: { background: "#393939", color: "#FFFFFF" },
+        });
+        return;
+      }
 
-    if (trimmedTitle.length > TITLE_MAX || trimmedDesc.length > DESC_MAX) {
-      toast.error("Please respect the character limits.", {
-        style: { background: "#393939", color: "#FFFFFF" },
-      });
-      return;
-    }
+      if (trimmedTitle.length > TITLE_MAX || trimmedDesc.length > DESC_MAX) {
+        toast.error("Please respect the character limits.", {
+          style: { background: "#393939", color: "#FFFFFF" },
+        });
+        return;
+      }
 
-    const employeeId = localStorage.getItem("my_id");
-    if (!employeeId) {
-      toast.error("No employee ID found. Please log in again.", {
-        style: { background: "#393939", color: "#FFFFFF" },
-      });
-      return;
-    }
+      if (!employeeId) {
+        toast.error("No employee ID found. Please log in again.", {
+          style: { background: "#393939", color: "#FFFFFF" },
+        });
+        return;
+      }
 
-    try {
-      setSubmitting(true);
+      try {
+        setSubmitting(true);
 
-      const res = await axios.post(API_URL, {
-        title: trimmedTitle,
-        description: trimmedDesc,
-        user_id: employeeId,
-      });
+        const res = await axios.post(API_URL, {
+          title: trimmedTitle,
+          description: trimmedDesc,
+          user_id: employeeId,
+        });
 
-      console.log("Document created:", res.data);
-      toast.success("Document created successfully!", {
-        style: { background: "#393939", color: "#FFFFFF" },
-      });
+        console.log("Document created:", res.data);
+        toast.success("Document created successfully!", {
+          style: { background: "#393939", color: "#FFFFFF" },
+        });
 
-      // reset + close modal
-      setTitle("");
-      setDescription("");
-      setIsModalOpen(false);
-    } catch (error: any) {
-      console.error(
-        "Error creating document:",
-        error.response?.data || error.message
-      );
-      toast.error("Failed to create document.", {
-        style: { background: "#393939", color: "#FFFFFF" },
-      });
-    } finally {
-      setSubmitting(false);
-    }
-  };
+        // reset + close modal
+        setTitle("");
+        setDescription("");
+        setIsModalOpen(false);
+      } catch (error: any) {
+        console.error(
+          "Error creating document:",
+          error.response?.data || error.message
+        );
+        toast.error("Failed to create document.", {
+          style: { background: "#393939", color: "#FFFFFF" },
+        });
+      } finally {
+        setSubmitting(false);
+      }
+    };
 
   return (
     <div className="w-screen h-screen flex flex-col items-center justify-center bg-zinc-900 px-20 md:px-80 sm:px-10">
