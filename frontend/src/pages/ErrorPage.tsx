@@ -1,9 +1,30 @@
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import toast from "react-hot-toast";
 
 function ErrorPage() {
   const navigate = useNavigate();
 
+  const handleLogout = async () => {
+    try {
+        await axios.post("http://localhost:8000/auth/logout", 
+        {}, 
+        { withCredentials: true } 
+        );
+
+        // console.log('Logout successful:', response.data);
+
+        toast.error("You have been logged out.");
+
+        navigate("/");
+
+    } catch (error: any) {
+        navigate("/");
+    } 
+  };    
+
   const handleButtonClick = () => {
+    handleLogout();
     navigate("/");
   };
 

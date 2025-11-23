@@ -49,7 +49,7 @@ function RolesTable() {
         // console.log("User ID: ", acc_id);
 
         try {
-            const res = await axios.patch(`http://localhost:8000/users/${acc_id}/role`,
+            await axios.patch(`http://localhost:8000/users/${acc_id}/role`,
                 { 
                     role: new_role
                 },
