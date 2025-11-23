@@ -102,7 +102,7 @@ function ViewEmployeeDocuments() {
 
     useEffect(() => {
         fetchUserInfo();
-        console.log("Employee ID: ", employeeId);
+        // console.log("Employee ID: ", employeeId);
         if (employeeId) {
           fetchDocuments();
         } else {

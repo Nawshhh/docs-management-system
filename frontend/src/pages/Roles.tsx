@@ -67,7 +67,7 @@ function Roles() {
   return (
     <div className='w-screen h-screen flex flex-col items-center justify-center bg-zinc-900 px-20 md:px-80 sm:px-10'>
       <p className='text-gray-200 text-3xl font-bold  mb-10'>User Roles</p>
-      <RolesTable/>
+        <RolesTable/>
         <div className='flex justify-center items-center w-full gap-x-20'>
             <button 
                 onClick={handleHome}

@@ -199,7 +199,7 @@ function EditDocument() {
             }
             );
 
-        console.log("Document updated:", res.data);
+        // console.log("Document updated:", res.data);
         toast.success("Document updated successfully!", {
             style: { background: "#393939", color: "#FFFFFF" },
         });

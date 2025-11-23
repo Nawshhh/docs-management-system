@@ -13,8 +13,7 @@ function ViewEmployeePage() {
 
     const navigate = useNavigate();
 
-    const location = useLocation();
-    const { my_id } = (location.state || {}) as { my_id?: string };
+    const [managerId, setManagerId] = useState<string | null>(null);
     const [accounts, setAccounts] = useState<Account[] | null>(null);
 
     const handleHome = () => {
@@ -23,16 +22,17 @@ function ViewEmployeePage() {
 
     useEffect(() => {
         fetchUserInfo();
-        fetchEmployeeData(my_id || "");
-    }, []);
+        if (managerId){
+            // console.log(managerId);
+            fetchEmployeeData();
+        }
+    }, [managerId]);
 
     const fetchUserInfo = async () => {
         try {
         const res = await axios.get("http://localhost:8000/auth/me", {
             withCredentials: true,
         });
-
-         
 
         const { ok, data, error } = res.data;
 
@@ -47,6 +47,9 @@ function ViewEmployeePage() {
             navigate("/");
             return;
         }
+
+        setManagerId(res.data.data.id);
+        // console.log(managerId);
 
         const userData = data;
 
@@ -76,7 +79,7 @@ function ViewEmployeePage() {
     };
 
 
-    const fetchEmployeeData = async (managerId: string) => {
+    const fetchEmployeeData = async () => {
 
     try {
         const response = await axios.get(

@@ -13,27 +13,17 @@ function RolesTable() {
     const [accounts, setAccounts] = useState<Account[] | null>(null);
     const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
     const [unClickable, setUnclickable] = useState<boolean>(false);
-    const location = useLocation();
-    const {my_id} = location.state || {};
-    const navigate = useNavigate();
 
     useEffect(()=>{
         fetchAccounts();
-        console.log("Received acc_id: ", my_id);
     },[]);
-
-    useEffect(() => {
-        if (accounts){
-            console.log("Updated accounts state: ", accounts)
-        }
-    },[accounts]);
 
     const fetchAccounts = async () => {
         try {
             const res = await axios.get("http://localhost:8000/users",{
                 withCredentials: true,
             });
-            console.log("Fetched users: ", res.data.data);
+            // console.log("Fetched users: ", res.data.data);
 
             const filtered = res.data.data.map((user: any) => ({
                 _id: user._id,
@@ -54,9 +44,9 @@ function RolesTable() {
     }
 
     const apiCall = async (new_role: string, old_role: string, acc_id:string) => {
-        console.log("Old Role: ", old_role);
-        console.log("New Role: ", new_role);
-        console.log("User ID: ", acc_id);
+        // console.log("Old Role: ", old_role);
+        // console.log("New Role: ", new_role);
+        // console.log("User ID: ", acc_id);
 
         try {
             const res = await axios.patch(`http://localhost:8000/users/${acc_id}/role`,
@@ -67,36 +57,16 @@ function RolesTable() {
                     withCredentials: true,
                 }
             );
-            console.log(res);
+            // console.log(res);
             toast.success("Role changed successfully!");
 
         } catch (error: any) {
             console.error("Error updating User Role");
         } finally {
-
-            // exit the account
-            if (my_id == acc_id){
-                handleLogout();
-            }
-
             fetchAccounts();
             setUnclickable(!setUnclickable);
         }
     }
-
-    const handleLogout = async () => {
-        try {
-            await axios.post("http://localhost:8000/auth/logout", 
-            {}, 
-            { withCredentials: true } 
-            );
-
-            navigate("/");
-
-        } catch (error: any) {
-            console.error('Logout failed:', error.response?.data || error.message);
-        } 
-    };  
 
   return (
     <div>

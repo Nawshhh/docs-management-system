@@ -31,8 +31,6 @@ function ViewDocuments() {
 
   const [managerId, setManagerId] = useState<string | null>(null);
 
-  // const managerId = localStorage.getItem("my_id");
-
   const handleBack = () => {
     navigate("/documents");
   };
@@ -56,7 +54,7 @@ function ViewDocuments() {
 
     const fetchDocuments = async () => {
       try {
-        console.log("Fetching documents for manager ID:", managerId);
+        // console.log("Fetching documents for manager ID:", managerId);
         const res = await axios.post(
         "http://localhost:8000/documents/view-docs",
         { manager_id: managerId }

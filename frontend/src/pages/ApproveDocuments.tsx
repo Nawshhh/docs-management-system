@@ -130,7 +130,7 @@ function ApproveDocuments() {
                 }
             );
 
-            console.log("Approve response:", res.data);
+            // console.log("Approve response:", res.data);
 
             toast.success("Document approved successfully.", {
                 style: { background: "#393939", color: "#FFFFFF" },

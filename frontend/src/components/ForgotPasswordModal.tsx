@@ -51,7 +51,7 @@ function ForgotPasswordModal() {
                 setFoundEmail(true);
             }
         } catch (error: any) {
-            console.log("Error finding email:", error.response?.data || error.message);
+            // console.log("Error finding email:", error.response?.data || error.message);
         } 
     }
 
@@ -64,7 +64,7 @@ function ForgotPasswordModal() {
         { email, security_answer: nickName } // plus security_answer if your backend needs it
         );
 
-        console.log("Find nickname message:", res.data, email, nickName);
+        // console.log("Find nickname message:", res.data, email, nickName);
 
         const { ok, error } = res.data;
 
@@ -91,7 +91,7 @@ function ForgotPasswordModal() {
         setIsLocked(true);
         setLockMessage(serverError);
         } else {
-        console.log("Error matching nickname:", error.response?.data || error.message);
+        // console.log("Error matching nickname:", error.response?.data || error.message);
         setLockMessage("Something went wrong. Please try again.");
         }
     }

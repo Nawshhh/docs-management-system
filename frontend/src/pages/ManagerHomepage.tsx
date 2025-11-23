@@ -81,8 +81,8 @@ function ManagerHomepage() {
     };
 
     const handleButtonClick = (dest: number) => {
-        if (dest === 1) navigate("/view-scope", { state: { my_id: user!.id } });
-        if (dest === 2) navigate("/documents", { state: { my_id: user!.id } });
+        if (dest === 1) navigate("/view-scope");
+        if (dest === 2) navigate("/documents");
     };
 
   if (loading) {

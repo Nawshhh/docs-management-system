@@ -75,7 +75,7 @@ function LogsTable() {
                 withCredentials: true,
             });
 
-            console.log("Fetched logs: ", res.data);
+            // console.log("Fetched logs: ", res.data);
 
             const filtered = res.data.data?.map((log: any) => ({
                 id: log.id,

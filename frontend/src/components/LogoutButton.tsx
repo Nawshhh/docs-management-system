@@ -12,7 +12,7 @@ function LogoutButton() {
         { withCredentials: true } 
         );
 
-        console.log('Logout successful:', response.data);
+        // console.log('Logout successful:', response.data);
 
         localStorage.removeItem("token");
 

@@ -122,7 +122,7 @@ function AddDocument() {
           user_id: employeeId,
         });
 
-        console.log("Document created:", res.data);
+        // console.log("Document created:", res.data);
         toast.success("Document created successfully!", {
           style: { background: "#393939", color: "#FFFFFF" },
         });

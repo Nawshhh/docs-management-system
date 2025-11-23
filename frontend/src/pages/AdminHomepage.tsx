@@ -69,7 +69,7 @@ function AdminHomepage() {
 
   const handleButtonClick = (dest: number) => {
     if (dest === 1) navigate("/accounts");
-    if (dest === 2) navigate("/roles", { state: { my_id: user.id } });
+    if (dest === 2) navigate("/roles");
     if (dest === 3) navigate("/system-logs");
     if (dest === 4) navigate("/assign-scope");
   };

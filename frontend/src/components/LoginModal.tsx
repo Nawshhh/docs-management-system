@@ -67,12 +67,12 @@ function LoginModal() {
   };
 
   const handleCreateAccount = () => {
-    console.log("Routing to create account");
+    // console.log("Routing to create account");
     navigate("/create-account");
   }
 
   const handleForgotPassword = () => {
-    console.log("Routing to forgot password");
+    // console.log("Routing to forgot password");
     navigate("/forgot-password");
   }
 
