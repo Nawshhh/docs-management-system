@@ -22,7 +22,6 @@ import re
 router = APIRouter()
 
 ACCESS_TTL_MIN = 15
-REFRESH_TTL_MIN = 5  # 5 minutes
 
 class LoginBody(BaseModel):
     email: str
@@ -203,11 +202,6 @@ async def login(body: LoginBody, request: Request, db: AsyncIOMotorDatabase = De
             secret=settings.JWT_SECRET,
             ttl_minutes=ACCESS_TTL_MIN,
             extra={"role": role_value, "email": email},
-        )
-        refresh = make_token(
-            user_id,
-            secret=settings.JWT_REFRESH_SECRET,
-            ttl_minutes=REFRESH_TTL_MIN,
         )
 
         # 6) Load full user representation (as you already do)
