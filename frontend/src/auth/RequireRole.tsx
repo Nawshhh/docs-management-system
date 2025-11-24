@@ -29,45 +29,45 @@ export function RequireRole({ allowedRoles, pageLabel, children }: RequireRolePr
     }
   };
 
-    const checkAuth = async () => {
-      try {
-        const res = await axios.get("http://localhost:8000/auth/me", {
-          withCredentials: true,
-        });
+  const checkAuth = async () => {
+    try {
+      const res = await axios.get("http://localhost:8000/auth/me", {
+        withCredentials: true,
+      });
 
-        const { ok, data, error } = res.data;
+      const { ok, data, error } = res.data;
 
-        if (!ok || !data) {
-          await logBreachOnce();
-          toast.error(error || "Unable to verify permissions.", {
-            style: { background: "#393939", color: "#FFFFFF" },
-          });
-          navigate("/error-page");
-          return;
-        }
-
-        const userData = data;
-        if (!allowedRoles.includes(userData.role)) {
-          await logBreachOnce();
-          toast.error("Access denied.", {
-            style: { background: "#393939", color: "#FFFFFF" },
-          });
-          navigate("/error-page");
-          return;
-        }
-
-        setUser(userData);
-      } catch (err: any) {
-        console.error("Auth check failed:", err.response?.data || err.message);
+      if (!ok || !data) {
         await logBreachOnce();
-        toast.error("Unable to verify permissions.", {
+        toast.error(error || "Unable to verify permissions.", {
           style: { background: "#393939", color: "#FFFFFF" },
         });
         navigate("/error-page");
-      } finally {
-        setLoading(false);
+        return;
       }
-    };
+
+      const userData = data;
+      if (!allowedRoles.includes(userData.role)) {
+        await logBreachOnce();
+        toast.error("Access denied.", {
+          style: { background: "#393939", color: "#FFFFFF" },
+        });
+        navigate("/error-page");
+        return;
+      }
+
+      setUser(userData);
+    } catch (err: any) {
+      console.error("Auth check failed:", err.response?.data || err.message);
+      await logBreachOnce();
+      toast.error("Unable to verify permissions.", {
+        style: { background: "#393939", color: "#FFFFFF" },
+      });
+      navigate("/error-page");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     checkAuth();

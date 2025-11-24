@@ -230,19 +230,11 @@ async def login(body: LoginBody, request: Request, db: AsyncIOMotorDatabase = De
             key="access_token",
             value=access,
             httponly=True,
-            secure=False,       # True in production (HTTPS)
+            secure=False,       
             samesite="lax",
             max_age=ACCESS_TTL_MIN * 60,
         )
 
-        response.set_cookie(
-            key="refresh_token",
-            value=refresh,
-            httponly=True,
-            secure=False,      # True in prod
-            samesite="lax",
-            max_age=60 * 60 * 24 * 7,
-        )
         return response
 
     except Exception as e:
@@ -370,7 +362,6 @@ async def logout(
 ):
     try:
         response.delete_cookie("access_token", samesite="lax", secure=False)
-        response.delete_cookie("refresh_token", samesite="lax", secure=False)
 
         print("Current User: ", current_user.id)
         print("Current Role: ", current_user.role)
