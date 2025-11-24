@@ -1,6 +1,7 @@
 # backend/app/repos/audit_logs.py
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 from typing import Optional, Any
 
 from ..models import AuditLogDB, AuditLogOut
@@ -26,6 +27,8 @@ async def ensure_indexes(db: AsyncIOMotorDatabase):
     await db[COLL].create_index([("created_at", -1)])
     await db[COLL].create_index("action")
     await db[COLL].create_index("resource_type")
+
+MANILA_TZ = ZoneInfo("Asia/Manila")
 
 async def log_event(
     db: AsyncIOMotorDatabase,

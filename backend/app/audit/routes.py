@@ -10,18 +10,24 @@ from ..repos import audit_logs as logs_repo
 from ..models import Role
 
 from datetime import datetime, timezone, timedelta
+from zoneinfo import ZoneInfo  # Python 3.9+
 
 router = APIRouter()
 
-def format_datetime(dt):
-    """Convert UTC datetime to Philippines local time (GMT+8) and format."""
-    if not dt:
-        return None
-    if isinstance(dt, str):
-        dt = datetime.fromisoformat(dt.replace("Z", "+00:00"))
-    # Convert UTC → GMT+8 (Philippines)
-    dt = dt.astimezone(timezone(timedelta(hours=8)))
-    return dt.strftime("%b %d, %Y, %I:%M %p")  # e.g. "Oct 04, 2025, 03:42 PM"
+MANILA_TZ = ZoneInfo("Asia/Manila")
+
+def format_datetime(dt: datetime | None) -> str:
+    """
+    Converts a UTC datetime to Manila time (Asia/Manila) for display.
+    """
+    if dt is None:
+        return ""
+    # assume dt is timezone-aware UTC from DB
+    if dt.tzinfo is None:
+        # if somehow naive, treat as UTC
+        dt = dt.replace(tzinfo=timezone.utc)
+    local_dt = dt.astimezone(MANILA_TZ)
+    return local_dt.strftime("%Y-%m-%d %H:%M:%S")
 
 @router.get("/", response_model=ApiEnvelope)
 async def list_audit_logs(
