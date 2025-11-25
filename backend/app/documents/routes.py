@@ -77,6 +77,8 @@ async def update_document(
     db: AsyncIOMotorDatabase = Depends(get_db),
 ):
     try:
+
+        print("here 1")
         # You can make a payload model or just pass the fields directly
         update_payload = {
             "title": body.title,
@@ -86,6 +88,8 @@ async def update_document(
         doc = await docs_repo.update_document(db, doc_id, update_payload)
         if not doc:
             return fail("Document not found")
+        
+        print("edited")
 
         await logs_repo.log_event(
             db,
@@ -146,6 +150,7 @@ async def update_draft(
     Public: caller provides user_id; repo enforces "owner can update" logic.
     """
     try:
+        print("here 2")
         updated = await docs_repo.update_draft(
             db,
             doc_id,

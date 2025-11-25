@@ -175,4 +175,14 @@ async def update_document(db, doc_id: str, fields: dict) -> DocumentDB | None:
     )
     if not res:
         return None
+
+    if "_id" in res and isinstance(res["_id"], ObjectId):
+        res["_id"] = str(res["_id"])
+
+    if "owner_id" in res and isinstance(res["owner_id"], ObjectId):
+        res["owner_id"] = str(res["owner_id"])
+
+    if "manager_id" in res and isinstance(res["manager_id"], ObjectId):
+        res["manager_id"] = str(res["manager_id"])
+
     return DocumentDB(**res)

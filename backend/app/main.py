@@ -101,7 +101,7 @@ async def startup():
                 user = await users_repo.create_user(db, payload)
                 await logs_repo.log_event(
                     db,
-                    actor_id=None,
+                    actor_id=user.id,
                     action="USER_CREATE",
                     resource_type="USER",
                     resource_id=user.id,
@@ -172,9 +172,10 @@ async def startup():
 
             try:
                 user = await users_repo.create_user(db, payload)
+                print(user)
                 await logs_repo.log_event(
                     db,
-                    actor_id=None,
+                    actor_id=user.id,
                     action="USER_CREATE",
                     resource_type="USER",
                     resource_id=user.id,
