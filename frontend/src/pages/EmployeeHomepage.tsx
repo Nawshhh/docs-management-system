@@ -68,8 +68,6 @@ function EmployeeHomepage() {
             setUser(userData);
             setFirstName(userData.profile?.first_name || "Employee");
         } catch (error: any) {
-            console.error("User info failed:", error.response?.data || error.message);
-
             toast.error("Unable to verify permissions.", {
                 style: {
                 background: "#393939",

@@ -49,8 +49,6 @@ async def startup():
     await docs_repo.ensure_indexes(db)
     await logs_repo.ensure_indexes(db)
 
-    # ---- Seed 3 admin accounts if users collection is empty ----
-# ---- Seed 3 admin accounts if users collection is empty ----
     user_count = await db["users"].count_documents({})
     if user_count == 0:
         seed_admins = [
@@ -67,14 +65,7 @@ async def startup():
                 "first_name": "Admin",
                 "last_name": "Two",
                 "security_answer": "admin2",
-            },
-            {
-                "email": "admin3@example.com",
-                "password": "admin3!",
-                "first_name": "Admin",
-                "last_name": "Three",
-                "security_answer": "admin3",
-            },
+            }
         ]
 
         for adm in seed_admins:
@@ -111,7 +102,7 @@ async def startup():
             except DuplicateKeyError:
                 print(f"Admin user already exists: {adm['email']}")
 
-        # ---- Seed 5 manager accounts ----
+        # ---- Seed 2 manager accounts ----
         seed_managers = [
             {
                 "email": "manager1@example.com",
@@ -133,21 +124,7 @@ async def startup():
                 "first_name": "Manager",
                 "last_name": "Three",
                 "security_answer": "manager3",
-            },
-            {
-                "email": "manager4@example.com",
-                "password": "manager4!",
-                "first_name": "Manager",
-                "last_name": "Four",
-                "security_answer": "manager4",
-            },
-            {
-                "email": "manager5@example.com",
-                "password": "manager5!",
-                "first_name": "Manager",
-                "last_name": "Five",
-                "security_answer": "manager5",
-            },
+            }
         ]
 
         for mgr in seed_managers:
@@ -184,5 +161,77 @@ async def startup():
                 print(f"Seeded manager user: {mgr['email']}")
             except DuplicateKeyError:
                 print(f"Manager user already exists: {mgr['email']}")
+
+        seed_employees = [
+            {
+                "email": "employee1@example.com",
+                "password": "employee1!",
+                "first_name": "Employee",
+                "last_name": "One",
+                "security_answer": "employee1",
+            },
+            {
+                "email": "employee2@example.com",
+                "password": "employee2!",
+                "first_name": "Employee",
+                "last_name": "Two",
+                "security_answer": "employee2",
+            },
+            {
+                "email": "employee3@example.com",
+                "password": "employee3!",
+                "first_name": "Employee",
+                "last_name": "Three",
+                "security_answer": "employee3",
+            },
+            {
+                "email": "employee4@example.com",
+                "password": "employee4!",
+                "first_name": "Employee",
+                "last_name": "Four",
+                "security_answer": "employee4",
+            },
+            {
+                "email": "employee5@example.com",
+                "password": "employee5!",
+                "first_name": "Employee",
+                "last_name": "Five",
+                "security_answer": "employee5",
+            },
+        ]
+
+        for emp in seed_employees:
+            payload = UserCreate(
+                email=emp["email"],
+                password=emp["password"],
+                role=Role.EMPLOYEE,
+                profile={
+                    "first_name": emp["first_name"],
+                    "last_name": emp["last_name"],
+                },
+                security_answer=emp["security_answer"],
+                reset_attempts=0,
+                reset_lock_until=None,
+                password_history=[],
+                last_use_at=None,
+                last_use_success=None,
+                last_use_ip=None,
+                manager_id=None,             
+                last_password_change_at=None,
+            )
+
+            try:
+                user = await users_repo.create_user(db, payload)
+                await logs_repo.log_event(
+                    db,
+                    actor_id=user.id,
+                    action="USER_CREATE",
+                    resource_type="USER",
+                    resource_id=user.id,
+                    details={"seed_employee": True, "email": emp["email"]},
+                )
+                print(f"Seeded employee user: {emp['email']}")
+            except DuplicateKeyError:
+                print(f"Employee user already exists: {emp['email']}")
 
 

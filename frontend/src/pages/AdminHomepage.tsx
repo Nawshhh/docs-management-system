@@ -53,7 +53,6 @@ function AdminHomepage() {
         setLastName(userData.profile?.last_name || "");
       }
     } catch (error: any) {
-      console.error("User info failed:", error.response?.data || error.message);
       await axios.post("http://localhost:8000/auth/page-breach", { page: "ADMIN" });
       toast.error("Unable to verify permissions.", {
         style: {

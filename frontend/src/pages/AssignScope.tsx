@@ -73,8 +73,6 @@ function AssignScope() {
       }
 
     } catch (error: any) {
-      console.error("User info failed:", error.response?.data || error.message);
-
       toast.error("Unable to verify permissions.", {
         style: {
           background: "#393939",
@@ -119,10 +117,6 @@ function AssignScope() {
       setManagers(mgrData);
       setEmployees(empData);
     } catch (error: any) {
-      console.error(
-        "Error fetching scope data:",
-        error.response?.data || error.message
-      );
       toast.error("Failed to load scope data.", {
         style: { background: "#393939", color: "#FFFFFF" },
       });
@@ -151,7 +145,6 @@ function AssignScope() {
 
         setEmployees(prev => prev.map(e => e._id === employeeId ? { ...e, manager_id: managerId } : e));
     } catch (error: any) {
-        console.error("Error assigning manager:", error.response?.data || error.message);
         toast.error("Failed to assign manager.", {
         style: { background: "#393939", color: "#FFFFFF" },
         });

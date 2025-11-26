@@ -2,7 +2,8 @@
 from typing import Optional, Iterable
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from datetime import datetime
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 from ..models import DocumentCreate, DocumentDB, DocumentOut, DocStatus, Attachment, ReviewInfo
 from .utils import to_obj_id, from_obj_id
@@ -40,7 +41,7 @@ async def ensure_indexes(db: AsyncIOMotorDatabase):
     await db[COLL].create_index("created_at")
 
 async def create_document(db: AsyncIOMotorDatabase, owner_id: str, payload: DocumentCreate) -> DocumentOut:
-    now = datetime.utcnow()
+    now = datetime.now(ZoneInfo("Asia/Manila"))
     doc = {
         "owner_id": to_obj_id(owner_id),
         "title": payload.title,
@@ -168,9 +169,13 @@ async def list_all_documents(db: AsyncIOMotorDatabase) -> list[DocumentOut]:
     return [_doc_to_out(d) async for d in cursor]
 
 async def update_document(db, doc_id: str, fields: dict) -> DocumentDB | None:
+    now = datetime.now(timezone.utc)
+
+    print(now)
+
     res = await db["documents"].find_one_and_update(
         {"_id": to_obj_id(doc_id)},
-        {"$set": fields},
+        {"$set": {**fields, "updated_at": now}},
         return_document=True,
     )
     if not res:

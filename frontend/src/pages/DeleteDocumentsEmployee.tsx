@@ -78,8 +78,6 @@ const navigate = useNavigate();
                 return;
             }
         } catch (error: any) {
-            console.error("User info failed:", error.response?.data || error.message);
-
             toast.error("Unable to verify permissions.", {
                 style: {
                 background: "#393939",
@@ -140,10 +138,6 @@ const navigate = useNavigate();
         prev.filter((d) => d.id !== docId && d._id !== docId)
         );
     } catch (error: any) {
-        console.error(
-        "Error deleting document:",
-        error.response?.data || error.message
-        );
         toast.error("Failed to delete document.", {
         style: { background: "#393939", color: "#FFFFFF" },
         });
@@ -205,10 +199,6 @@ const navigate = useNavigate();
         const items: Document[] = res.data?.data || [];
         setDocuments(items);
       } catch (error: any) {
-        console.error(
-          "Error fetching documents:",
-          error.response?.data || error.message
-        );
         toast.error("Failed to load documents.", {
           style: { background: "#393939", color: "#FFFFFF" },
         });

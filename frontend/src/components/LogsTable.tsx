@@ -57,8 +57,6 @@ function LogsTable() {
         }
 
         } catch (error: any) {
-        console.error("User info failed:", error.response?.data || error.message);
-
         toast.error("Unable to verify permissions.", {
             style: {
             background: "#393939",
@@ -91,7 +89,6 @@ function LogsTable() {
                 toast.error(res.data.error || "Failed to load logs");
             }
         } catch (error: any) {
-            console.error("Error fetching logs: ", error);
             toast.error("Error fetching logs");
         }
     }

@@ -66,8 +66,6 @@ function ViewEmployeePage() {
         }
 
         } catch (error: any) {
-        console.error("User info failed:", error.response?.data || error.message);
-
         toast.error("Unable to verify permissions.", {
             style: {
             background: "#393939",
@@ -97,7 +95,7 @@ function ViewEmployeePage() {
 
         setAccounts(filtered);
     } catch (error) {
-        console.error("Error fetching employee data:", error);
+        toast.error("Cannot fetch employee data");
         return null;
     }
     };

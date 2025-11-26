@@ -25,7 +25,7 @@ function LogoutButton() {
         navigate("/");
 
     } catch (error: any) {
-        console.error('Logout failed:', error.response?.data || error.message);
+        toast.error("Cannot Log Out");
     } 
   };    
 

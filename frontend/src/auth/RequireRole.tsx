@@ -25,7 +25,7 @@ export function RequireRole({ allowedRoles, pageLabel, children }: RequireRolePr
     try {
       await axios.post("http://localhost:8000/auth/page-breach", { page: pageLabel });
     } catch (e) {
-      console.error("Failed to log page breach:", e);
+      return;
     }
   };
 
@@ -58,7 +58,6 @@ export function RequireRole({ allowedRoles, pageLabel, children }: RequireRolePr
 
       setUser(userData);
     } catch (err: any) {
-      console.error("Auth check failed:", err.response?.data || err.message);
       await logBreachOnce();
       toast.error("Unable to verify permissions.", {
         style: { background: "#393939", color: "#FFFFFF" },

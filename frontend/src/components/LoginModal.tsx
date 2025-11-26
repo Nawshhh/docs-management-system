@@ -59,7 +59,7 @@ function LoginModal() {
       
     } catch (err: any) {
       const backendError = err.response?.data?.error;
-      console.error("Login failed:", err.response?.data || err.message);
+      toast.error("Cannot Log in");
       setError(backendError || "Could not log in.");
     } finally {
       setLoading(false);

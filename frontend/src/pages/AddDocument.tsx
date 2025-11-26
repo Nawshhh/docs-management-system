@@ -74,8 +74,6 @@ function AddDocument() {
                 return;
             }
         } catch (error: any) {
-            console.error("User info failed:", error.response?.data || error.message);
-
             toast.error("Unable to verify permissions.", {
                 style: {
                 background: "#393939",
@@ -132,10 +130,6 @@ function AddDocument() {
         setDescription("");
         setIsModalOpen(false);
       } catch (error: any) {
-        console.error(
-          "Error creating document:",
-          error.response?.data || error.message
-        );
         toast.error("Failed to create document.", {
           style: { background: "#393939", color: "#FFFFFF" },
         });

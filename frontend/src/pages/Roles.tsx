@@ -52,8 +52,6 @@ function Roles() {
       }
 
     } catch (error: any) {
-      console.error("User info failed:", error.response?.data || error.message);
-
       toast.error("Unable to verify permissions.", {
         style: {
           background: "#393939",

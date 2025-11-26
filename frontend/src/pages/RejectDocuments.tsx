@@ -82,8 +82,6 @@ function RejectDocuments() {
         }
 
         } catch (error: any) {
-        console.error("User info failed:", error.response?.data || error.message);
-
         toast.error("Unable to verify permissions.", {
             style: {
             background: "#393939",
@@ -144,12 +142,8 @@ function RejectDocuments() {
         prev.filter((d) => d.id !== docId && d._id !== docId)
         );
     } catch (error: any) {
-        console.error(
-        "Error rejecting document:",
-        error.response?.data || error.message
-        );
         toast.error("Failed to reject document.", {
-        style: { background: "#393939", color: "#FFFFFF" },
+          style: { background: "#393939", color: "#FFFFFF" },
         });
     } finally {
         setDeletingId(null);
@@ -210,10 +204,6 @@ function RejectDocuments() {
         const items: Document[] = res.data?.data || [];
         setDocuments(items);
       } catch (error: any) {
-        console.error(
-          "Error fetching documents:",
-          error.response?.data || error.message
-        );
         toast.error("Failed to load documents.", {
           style: { background: "#393939", color: "#FFFFFF" },
         });

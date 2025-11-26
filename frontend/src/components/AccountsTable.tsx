@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from 'axios';
+import toast from "react-hot-toast";
 
 interface Account {
     _id: string,
@@ -30,7 +31,8 @@ function AccountsTable() {
 
             setAccounts(filtered);
         } catch (err) {
-            console.error("Error fetching users:", err);
+            toast.error("Cannot fetch accounts");
+            return;
         }
     };
 

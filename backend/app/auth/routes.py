@@ -52,7 +52,7 @@ async def login(body: LoginBody, request: Request, db: AsyncIOMotorDatabase = De
         # 1) Fetch user by email
         user_doc = await db[COLL].find_one({"email": email})
         if not user_doc:
-            return fail("User does not exist.")
+            return fail("Invalid credentials.")
 
         now = datetime.utcnow()
         client_ip = request.client.host if request.client else None

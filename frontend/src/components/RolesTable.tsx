@@ -33,7 +33,7 @@ function RolesTable() {
 
             setAccounts(filtered);
         } catch (error: any) {
-            console.error("Error fetching users: ", error);
+            toast.error("Cannot fetch users");
         }
     }
 
@@ -61,7 +61,7 @@ function RolesTable() {
             toast.success("Role changed successfully!");
 
         } catch (error: any) {
-            console.error("Error updating User Role");
+            toast.error("Cannot update role");
         } finally {
             fetchAccounts();
             setUnclickable(!setUnclickable);

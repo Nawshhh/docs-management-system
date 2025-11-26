@@ -61,10 +61,6 @@ function EditDocument() {
             const items: Document[] = res.data?.data || [];
             setDocuments(items);
         } catch (error: any) {
-            console.error(
-            "Error fetching documents:",
-            error.response?.data || error.message
-            );
             toast.error("Failed to load documents.", {
             style: { background: "#393939", color: "#FFFFFF" },
             });
@@ -120,8 +116,6 @@ function EditDocument() {
 
             setEmployeeId(userData.id)
         } catch (error: any) {
-            console.error("User info failed:", error.response?.data || error.message);
-
             toast.error("Unable to verify permissions.", {
                 style: {
                 background: "#393939",
@@ -187,7 +181,7 @@ function EditDocument() {
         try {
         setSubmitting(true);
 
-            const res = await axios.patch(
+            await axios.patch(
             `http://localhost:8000/documents/${docId}`,
             {
                 title: trimmedTitle,
@@ -219,10 +213,6 @@ function EditDocument() {
 
         closeModal();
         } catch (error: any) {
-        console.error(
-            "Error updating document:",
-            error.response?.data || error.message
-        );
         toast.error("Failed to update document.", {
             style: { background: "#393939", color: "#FFFFFF" },
         });

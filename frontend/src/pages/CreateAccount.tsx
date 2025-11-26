@@ -115,20 +115,9 @@ function CreateAccount() {
 
       handleCancel();
     } catch (error: any) {
-      console.error("Error creating account:", error.response?.data || error.message);
       toast.error("Failed to create account.");
     }
   };
-
-  // const handleFetchManagers = async () => {
-  //   try {
-  //     const res = await axios.get("http://localhost:8000/users/managers");
-  //     const managers = res.data.data;
-  //     setManagerList(managers);
-  //   } catch (error) {
-  //     console.error("Error fetching managers:", error);
-  //   }
-  // };
 
   const handleCancel = () => {
     navigate("/");
